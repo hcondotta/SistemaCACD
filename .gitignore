@@ -1,0 +1,41 @@
+# Dependências
+node_modules/
+.pnp
+.pnp.*
+
+# Build do Next.js
+.next/
+out/
+build/
+next-env.d.ts
+
+# Ambiente — NUNCA versionar chaves
+.env
+.env.local
+.env.*.local
+
+# Python (back-office)
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.Python
+
+# Acervo didático (PDFs, videoaulas, fichamentos) — pesado e pessoal
+acervo/
+backoffice/acervo/
+
+# Logs e cache
+*.log
+npm-debug.log*
+.turbo/
+.cache/
+
+# Sistema operacional / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Vercel
+.vercel
