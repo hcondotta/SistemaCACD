@@ -1,0 +1,1 @@
+python ingestion/import_past_exams.py --mode tps --pdf ./acervo/provas/tps_2024.pdf --gabarito ./acervo/provas/gabarito_2024.pdf --year 2024 --board "Cebraspe" --subject economia

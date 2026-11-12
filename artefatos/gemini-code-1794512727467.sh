@@ -1,0 +1,1 @@
+python ingestion/import_past_exams.py --mode essay --pdf ./acervo/provas/discursiva_economia_2023.pdf --gabarito ./acervo/provas/espelho_2023.pdf --year 2023 --subject economia

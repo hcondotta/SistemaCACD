@@ -1,0 +1,1644 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Itamaraty / Rio Branco — Design System & Plataforma CACD (Economia)</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Newsreader (Serif Editorial), Plus Jakarta Sans (UI), JetBrains Mono (Dados/Linhas) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+            serif: ['"Newsreader"', 'Georgia', 'serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            itamaraty: {
+              navy: {
+                950: '#08111D',
+                900: '#0F1E32',
+                800: '#18304E',
+                700: '#1B3B61',
+                600: '#1E4471',
+                500: '#2B5B94',
+              },
+              emerald: {
+                950: '#04221A',
+                900: '#07362A',
+                700: '#0D5C46',
+                500: '#108565',
+                400: '#24A17E',
+              },
+              gold: {
+                700: '#8A6409',
+                600: '#B8860B',
+                500: '#C59B27',
+                400: '#D4AF37',
+                300: '#E5C76B',
+              },
+              carmine: {
+                900: '#4A1213',
+                700: '#9E2A2B',
+                500: '#C83E3B',
+              },
+            },
+            travertine: {
+              50: '#FBF9F5',
+              100: '#F3EFE6',
+              200: '#E5DEC9',
+              300: '#D2C7A8',
+            },
+            ink: {
+              900: '#121C26',
+              700: '#2D3748',
+              600: '#4A5568',
+            },
+            econ: {
+              is: '#F59E0B',     // Curva IS - Ouro Imperial
+              lm: '#38BDF8',     // Curva LM - Azul Celeste Rio Branco
+              bp: '#10B981',     // Curva BP - Esmeralda Itamaraty
+              shock: '#F97316',  // Choque / Deslocamento - Coral
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    :root {
+      --bg-primary: #FBF9F5;
+      --bg-card: #F3EFE6;
+      --bg-elevated: #FFFFFF;
+      --border-color: #E5DEC9;
+      --text-primary: #121C26;
+      --text-secondary: #4A5568;
+      --accent-gold: #B8860B;
+      --accent-emerald: #0D5C46;
+      --btn-primary-bg: #1E4471;
+      --btn-primary-text: #FBF9F5;
+      --ruled-line: #E5DEC9;
+      --ruled-margin: rgba(158, 42, 43, 0.42);
+      --ruled-bg: #FBF9F5;
+    }
+
+    html.dark {
+      --bg-primary: #08111D;
+      --bg-card: #0F1E32;
+      --bg-elevated: #13253D;
+      --border-color: #18304E;
+      --text-primary: #F3EFE6;
+      --text-secondary: #94A3B8;
+      --accent-gold: #C59B27;
+      --accent-emerald: #108565;
+      --btn-primary-bg: #C59B27;
+      --btn-primary-text: #08111D;
+      --ruled-line: rgba(24, 48, 78, 0.85);
+      --ruled-margin: rgba(197, 155, 39, 0.48);
+      --ruled-bg: #0B1626;
+    }
+
+    body {
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      transition: background-color 0.35s ease, color 0.35s ease;
+    }
+
+    .theme-card {
+      background-color: var(--bg-card);
+      border-color: var(--border-color);
+      transition: background-color 0.35s ease, border-color 0.35s ease, box-shadow 0.25s ease;
+    }
+
+    .theme-elevated {
+      background-color: var(--bg-elevated);
+      border-color: var(--border-color);
+      transition: background-color 0.35s ease, border-color 0.35s ease;
+    }
+
+    .theme-btn-primary {
+      background-color: var(--btn-primary-bg);
+      color: var(--btn-primary-text);
+      transition: all 0.25s ease;
+    }
+    .theme-btn-primary:hover {
+      filter: brightness(1.08);
+    }
+
+    /* =====================================================================
+       FOLHA PAUTADA OFICIAL DA 3ª FASE DO CACD (.cacd-ruled-paper)
+       ===================================================================== */
+    .cacd-ruled-container {
+      background-color: var(--ruled-bg);
+      border: 1px solid var(--border-color);
+      position: relative;
+      transition: background-color 0.35s ease, border-color 0.35s ease;
+    }
+
+    .cacd-line-numbers {
+      width: 3.25rem;
+      background-image: repeating-linear-gradient(
+        to bottom,
+        transparent 0px,
+        transparent 31px,
+        var(--ruled-line) 31px,
+        var(--ruled-line) 32px
+      );
+      line-height: 32px;
+      padding-top: 0px;
+      border-right: 2px solid var(--ruled-margin);
+      user-select: none;
+    }
+
+    .cacd-ruled-textarea {
+      background-color: transparent;
+      color: var(--text-primary);
+      background-image: repeating-linear-gradient(
+        to bottom,
+        transparent 0px,
+        transparent 31px,
+        var(--ruled-line) 31px,
+        var(--ruled-line) 32px
+      );
+      background-attachment: local;
+      line-height: 32px;
+      font-family: 'Newsreader', Georgia, serif;
+      font-size: 1.05rem;
+      padding: 0 1.25rem;
+      border: none;
+      outline: none;
+      resize: none;
+      width: 100%;
+    }
+
+    /* Transição suave das curvas do gráfico SVG */
+    .econ-svg-transition {
+      transition: all 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    /* Números tabulares para contadores e estatísticas */
+    .tabular-nums {
+      font-variant-numeric: tabular-nums;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-itamaraty-gold-500/30">
+
+  <!-- =====================================================================
+       PADRONAGEM SVG GLOBAL DE ATHOS BULCÃO (DEFINIÇÃO REUTILIZÁVEL)
+       ===================================================================== -->
+  <svg class="hidden" aria-hidden="true">
+    <defs>
+      <pattern id="athos-bulcao-pattern" width="64" height="64" patternUnits="userSpaceOnUse">
+        <path d="M0 0 L32 0 L0 32 Z" fill="currentColor" opacity="0.06" />
+        <path d="M32 32 L64 32 L64 64 Z" fill="currentColor" opacity="0.06" />
+        <circle cx="48" cy="16" r="10" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.07" />
+        <path d="M0 64 A32 32 0 0 1 32 32" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.07" />
+      </pattern>
+    </defs>
+  </svg>
+
+  <!-- =====================================================================
+       HEADER INSTITUCIONAL FIXO (COM INSÍGNIA ATIVA E ALTERNADOR DE TEMA)
+       ===================================================================== -->
+  <header class="sticky top-0 z-40 border-b backdrop-blur-md bg-[#FBF9F5]/95 dark:bg-[#08111D]/95 border-[#E5DEC9] dark:border-[#18304E] transition-colors">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-4">
+      
+      <!-- Brasão Estilizado + Nome do Sistema -->
+      <div class="flex items-center gap-3.5">
+        <div class="w-11 h-11 rounded-xl bg-itamaraty-navy-900 border border-itamaraty-gold-500/60 flex items-center justify-center shadow-md relative overflow-hidden">
+          <svg viewBox="0 0 40 40" class="w-8 h-8">
+            <circle cx="20" cy="20" r="16" fill="none" stroke="#C59B27" stroke-width="1.5" stroke-dasharray="3 2" />
+            <circle cx="20" cy="20" r="11" fill="#1E4471" stroke="#E5C76B" stroke-width="1.2" />
+            <polygon points="20,11 22.3,16.5 28.2,17 23.7,20.8 25.1,26.6 20,23.4 14.9,26.6 16.3,20.8 11.8,17 17.7,16.5" fill="#E5C76B" />
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="font-mono text-[11px] uppercase tracking-widest font-semibold text-itamaraty-gold-600 dark:text-itamaraty-gold-300">
+              Instituto Rio Branco • CACD
+            </span>
+            <span class="text-xs opacity-40">•</span>
+            <span class="font-mono text-[11px] px-2 py-0.5 rounded bg-itamaraty-emerald-700/15 text-itamaraty-emerald-700 dark:bg-itamaraty-emerald-500/20 dark:text-emerald-300 font-semibold">
+              Módulo Economia
+            </span>
+          </div>
+          <h1 class="font-serif text-lg sm:text-xl font-bold tracking-tight">
+            Gabinete de Estudos Diplomáticos
+          </h1>
+        </div>
+      </div>
+
+      <!-- Insígnia da Carreira Ativa + Alternador Pergaminho / Chancelaria Noturna -->
+      <div class="flex items-center gap-3 flex-wrap">
+        
+        <!-- Badge de Carreira Ativo (Clicável para ir à Aba 2) -->
+        <button onclick="switchTab('tab-insignias')" class="theme-card px-3 py-1.5 rounded-xl border flex items-center gap-2.5 text-left hover:border-itamaraty-gold-500 transition group" title="Clique para ver as Insígnias da Carreira">
+          <div id="header-rank-icon" class="w-7 h-7 rounded-lg bg-itamaraty-navy-900 flex items-center justify-center border border-itamaraty-gold-500/50">
+            <!-- Renderizado via JS -->
+          </div>
+          <div>
+            <span class="block text-[10px] font-mono uppercase tracking-wider opacity-70">Patente Atual</span>
+            <span id="header-rank-title" class="text-xs font-bold text-itamaraty-gold-600 dark:text-itamaraty-gold-300 group-hover:underline">
+              Terceiro-Secretário ★
+            </span>
+          </div>
+        </button>
+
+        <!-- Alternador de Tema (Modo Pergaminho Diurno vs. Chancelaria Noturna) -->
+        <div class="p-1 rounded-xl border border-[#E5DEC9] dark:border-[#18304E] bg-[#F3EFE6] dark:bg-[#0F1E32] flex items-center text-xs font-semibold">
+          <button id="btn-theme-light" onclick="setTheme('light')" class="px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all bg-[#1E4471] text-[#FBF9F5] shadow-xs">
+            <i data-lucide="sun" class="w-3.5 h-3.5 text-amber-300"></i>
+            <span>Pergaminho (Diurno)</span>
+          </button>
+          <button id="btn-theme-dark" onclick="setTheme('dark')" class="px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all text-slate-600 dark:text-slate-300 hover:text-ink-900 dark:hover:text-white">
+            <i data-lucide="moon" class="w-3.5 h-3.5 text-itamaraty-gold-400"></i>
+            <span>Chancelaria (Noturno)</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Barra de Abas Principais -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-2 overflow-x-auto pt-1 border-t border-[#E5DEC9]/60 dark:border-[#18304E]/60">
+      <button onclick="switchTab('tab-oficina')" id="nav-tab-oficina" class="tab-nav-btn px-4 py-2.5 text-xs sm:text-sm font-bold border-b-2 border-itamaraty-gold-600 dark:border-itamaraty-gold-400 text-itamaraty-navy-600 dark:text-itamaraty-gold-300 flex items-center gap-2 whitespace-nowrap transition">
+        <i data-lucide="feather" class="w-4 h-4"></i>
+        <span>1. Oficina 3ª Fase (Folha Pautada 90 Linhas)</span>
+      </button>
+      <button onclick="switchTab('tab-insignias')" id="nav-tab-insignias" class="tab-nav-btn px-4 py-2.5 text-xs sm:text-sm font-medium border-b-2 border-transparent opacity-75 hover:opacity-100 flex items-center gap-2 whitespace-nowrap transition">
+        <i data-lucide="award" class="w-4 h-4"></i>
+        <span>2. Insígnias da Carreira & Trilha de Economia</span>
+      </button>
+      <button onclick="switchTab('tab-graficos')" id="nav-tab-graficos" class="tab-nav-btn px-4 py-2.5 text-xs sm:text-sm font-medium border-b-2 border-transparent opacity-75 hover:opacity-100 flex items-center gap-2 whitespace-nowrap transition">
+        <i data-lucide="line-chart" class="w-4 h-4"></i>
+        <span>3. Tradutor de Gráficos (IS-LM-BP) & Arena TPS</span>
+      </button>
+      <button onclick="switchTab('tab-styleguide')" id="nav-tab-styleguide" class="tab-nav-btn px-4 py-2.5 text-xs sm:text-sm font-medium border-b-2 border-transparent opacity-75 hover:opacity-100 flex items-center gap-2 whitespace-nowrap transition">
+        <i data-lucide="palette" class="w-4 h-4"></i>
+        <span>4. Especificação Design System (Tokens & Cores)</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- =====================================================================
+       HERO BANNER INSTITUCIONAL: PALÁCIO DOS ARCOS + ATHOS BULCÃO + METEORO
+       ===================================================================== -->
+  <section class="relative overflow-hidden border-b border-[#E5DEC9] dark:border-[#18304E] bg-gradient-to-r from-[#08111D] via-[#0F1E32] to-[#18304E] text-[#F3EFE6]">
+    <!-- Textura Geométrica de Athos Bulcão no Fundo -->
+    <svg class="absolute inset-0 w-full h-full text-itamaraty-gold-400 pointer-events-none" aria-hidden="true">
+      <rect width="100%" height="100%" fill="url(#athos-bulcao-pattern)" />
+    </svg>
+
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+      <div class="lg:col-span-7 space-y-2.5">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-itamaraty-gold-500/15 border border-itamaraty-gold-500/40 text-itamaraty-gold-300 text-xs font-mono">
+          <span>ESTÉTICA EDITORIAL FUNAG & PALÁCIO DOS ARCOS</span>
+        </div>
+        <h2 class="font-serif text-2xl sm:text-3xl font-bold text-[#FBF9F5] leading-tight">
+          Ergonomia Cognitiva para Leituras Densas e Discursivas de 90 Linhas
+        </h2>
+        <p class="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-2xl">
+          Inspirado no mármore travertino de Oscar Niemeyer, nos jardins aquáticos de Burle Marx e nas insígnias da Ordem de Rio Branco. Alterne no topo entre o <strong>Modo Pergaminho</strong> e a <strong>Chancelaria Noturna</strong> para validar o conforto visual.
+        </p>
+      </div>
+
+      <!-- Ilustração Vetorial Autoral: Palácio Itamaraty (Arcos + Espelho d'Água + Escultura Meteoro) -->
+      <div class="lg:col-span-5 flex justify-center lg:justify-end">
+        <div class="w-full max-w-md rounded-2xl border border-itamaraty-gold-500/40 bg-[#08111D]/90 p-3 shadow-2xl">
+          <svg viewBox="0 0 420 155" class="w-full h-auto rounded-xl">
+            <defs>
+              <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#08111D" />
+                <stop offset="100%" stop-color="#18304E" />
+              </linearGradient>
+              <linearGradient id="waterGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#07362A" />
+                <stop offset="100%" stop-color="#08111D" />
+              </linearGradient>
+              <linearGradient id="goldSphere" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#E5C76B" />
+                <stop offset="100%" stop-color="#B8860B" />
+              </linearGradient>
+            </defs>
+            <!-- Céu Noturno Diplomático -->
+            <rect width="420" height="100" fill="url(#skyGrad)" />
+            <!-- Espelho d'Água de Burle Marx -->
+            <rect y="100" width="420" height="55" fill="url(#waterGrad)" />
+            <line x1="0" y1="100" x2="420" y2="100" stroke="#C59B27" stroke-width="1" opacity="0.6" />
+
+            <!-- Laje Superior e Base do Palácio em Mármore Travertino (#F3EFE6) -->
+            <rect x="35" y="34" width="350" height="5" fill="#F3EFE6" />
+            <rect x="45" y="42" width="330" height="56" fill="#1E4471" opacity="0.45" />
+            <line x1="45" y1="68" x2="375" y2="68" stroke="#E5C76B" stroke-width="0.8" opacity="0.5" />
+
+            <!-- Arcos Modernistas de Oscar Niemeyer (Palácio Itamaraty) -->
+            <g fill="#F3EFE6">
+              <path d="M40,100 L40,39 L46,39 L46,100 Z" />
+              <path d="M46,39 Q65,39 65,100 L71,100 Q71,39 90,39 Z" />
+              <path d="M96,39 Q115,39 115,100 L121,100 Q121,39 140,39 Z" />
+              <path d="M146,39 Q165,39 165,100 L171,100 Q171,39 190,39 Z" />
+              <path d="M196,39 Q215,39 215,100 L221,100 Q221,39 240,39 Z" />
+              <path d="M246,39 Q265,39 265,100 L271,100 Q271,39 290,39 Z" />
+              <path d="M296,39 Q315,39 315,100 L321,100 Q321,39 340,39 Z" />
+              <path d="M346,39 Q365,39 365,100 L371,100 Q371,39 380,39 L380,100 Z" />
+            </g>
+
+            <!-- Reflexo Suave dos Arcos no Espelho d'Água -->
+            <g fill="#F3EFE6" opacity="0.16">
+              <rect x="65" y="102" width="6" height="36" />
+              <rect x="115" y="102" width="6" height="36" />
+              <rect x="165" y="102" width="6" height="36" />
+              <rect x="215" y="102" width="6" height="36" />
+              <rect x="265" y="102" width="6" height="36" />
+              <rect x="315" y="102" width="6" height="36" />
+              <rect x="365" y="102" width="6" height="36" />
+            </g>
+
+            <!-- Escultura "Meteoro" de Bruno Giorgi em Ouro sobre o Espelho d'Água -->
+            <g transform="translate(112, 88)">
+              <rect x="-12" y="10" width="24" height="4" fill="#E5DEC9" />
+              <circle cx="0" cy="0" r="10" fill="url(#goldSphere)" />
+              <circle cx="-3" cy="-2" r="6" fill="none" stroke="#08111D" stroke-width="1.4" />
+              <circle cx="3" cy="2" r="5" fill="none" stroke="#08111D" stroke-width="1.4" />
+              <!-- Reflexo dourado na água -->
+              <ellipse cx="0" cy="22" rx="9" ry="3" fill="#E5C76B" opacity="0.35" />
+            </g>
+
+            <!-- Jardins Tropicais de Burle Marx -->
+            <path d="M15,128 Q45,118 80,128 Z" fill="#108565" opacity="0.7" />
+            <path d="M330,132 Q368,120 405,132 Z" fill="#108565" opacity="0.7" />
+            <text x="398" y="146" text-anchor="end" font-family="JetBrains Mono" font-size="8" fill="#E5C76B" opacity="0.8">
+              PALÁCIO ITAMARATY • BRASÍLIA
+            </text>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       CONTEÚDO PRINCIPAL (AS 4 ABAS INTERATIVAS)
+       ===================================================================== -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- ===================================================================
+         ABA 1: OFICINA DE 3ª FASE — FOLHA PAUTADA OFICIAL (60 A 90 LINHAS)
+         =================================================================== -->
+    <div id="tab-oficina" class="tab-panel space-y-6">
+      
+      <!-- Barra de Comando da Questão Discursiva -->
+      <div class="theme-card rounded-2xl border p-5 shadow-xs space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-4 border-b border-[#E5DEC9] dark:border-[#18304E] pb-4">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="font-mono text-xs font-bold uppercase px-2.5 py-0.5 rounded bg-itamaraty-navy-600 text-white dark:bg-itamaraty-gold-500 dark:text-itamaraty-navy-950">
+                3ª Fase CACD • Questão Discursiva de Economia
+              </span>
+              <span class="font-mono text-xs opacity-75">Valor: 30,00 pontos • Extensão: 60 a 90 linhas</span>
+            </div>
+            <h2 class="font-serif text-xl sm:text-2xl font-bold mt-1.5">
+              Estabilização Monetária, Mecanismo da URV, Âncora Cambial e a Mudança de Regime em 1999
+            </h2>
+          </div>
+
+          <!-- Alternador de Estágio (Esqueleto vs Folha Pautada Oficial) -->
+          <div class="flex items-center gap-1.5 p-1 rounded-xl border border-[#E5DEC9] dark:border-[#18304E] bg-[#FBF9F5] dark:bg-[#08111D] text-xs font-semibold">
+            <button onclick="setEssayStage('skeleton')" id="btn-stage-skeleton" class="px-3 py-1.5 rounded-lg transition opacity-75 hover:opacity-100">
+              Estágio 1: Esqueleto de Parágrafos
+            </button>
+            <button onclick="setEssayStage('paper')" id="btn-stage-paper" class="px-3 py-1.5 rounded-lg transition theme-btn-primary shadow-xs">
+              Estágio 3: Folha Pautada Oficial (60–90 Linhas)
+            </button>
+          </div>
+        </div>
+
+        <!-- Texto Motivador e Subcomandos Obrigatórios -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+          <div class="lg:col-span-7 font-serif text-sm leading-relaxed opacity-90 space-y-2">
+            <p class="italic">
+              "Ao contrário das tentativas heterodoxas da década de 1980 — baseadas em congelamentos abruptos que desorganizavam o sistema de preços relativos —, a concepção do Plano Real em 1993–1994 reconheceu a natureza específica da inflação inercial brasileira, mas sua sustentação entre 1995 e 1998 cobrou elevado custo macroeconômico."
+            </p>
+            <p class="text-xs font-sans opacity-75">
+              Com base na historiografia econômica brasileira (Giambiagi, Abreu, Bacha e Franco) e no modelo Mundell-Fleming, redija um texto dissertativo atendendo aos três subcomandos ao lado.
+            </p>
+          </div>
+          <div class="lg:col-span-5 theme-elevated rounded-xl border p-3.5 space-y-2 text-xs">
+            <div class="font-mono font-bold uppercase tracking-wider text-itamaraty-gold-600 dark:text-itamaraty-gold-400">
+              Subcomandos do Espelho da Banca:
+            </div>
+            <p><strong>a)</strong> Explique o diagnóstico da inflação inercial e como a <strong>URV</strong> neutralizou a memória inflacionária alinhando preços relativos sem congelamento. <span class="font-mono opacity-75">(10,0 pts)</span></p>
+            <p><strong>b)</strong> Analise o funcionamento da <strong>âncora cambial (1994–1998)</strong>, a necessidade de juros reais elevados, a esterilização monetária e a deterioração em Transações Correntes. <span class="font-mono opacity-75">(12,0 pts)</span></p>
+            <p><strong>c)</strong> Descreva o contágio das crises externas (México, Ásia e Rússia) e a transição de janeiro de 1999 para o <strong>Tripé Macroeconômico</strong>. <span class="font-mono opacity-75">(8,0 pts)</span></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Grid Principal da Oficina: Folha Pautada (7 col) + Espelho e Correção RAG (5 col) -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        <!-- COLUNA ESQUERDA: SIMULADOR DA FOLHA PAUTADA OFICIAL DO RIO BRANCO -->
+        <div class="lg:col-span-7 space-y-4">
+          
+          <!-- Barra de Instrumentos: Cronômetro, Contador de Linhas e Botões de Preenchimento -->
+          <div class="theme-card rounded-2xl border p-4 flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-4">
+              <!-- Cronômetro Simulado -->
+              <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-[#E5DEC9] dark:border-[#18304E] bg-[#FBF9F5] dark:bg-[#08111D]">
+                <i data-lucide="clock" class="w-4 h-4 text-itamaraty-gold-600 dark:text-itamaraty-gold-400"></i>
+                <span id="essay-timer" class="font-mono text-sm font-bold tabular-nums">01:14:20</span>
+                <button onclick="toggleTimer()" class="text-xs px-1.5 py-0.5 rounded bg-itamaraty-navy-600/10 dark:bg-white/10 hover:opacity-80 font-mono">
+                  <span id="timer-btn-text">Pausar</span>
+                </button>
+              </div>
+
+              <!-- Medidor de Linhas Pautadas -->
+              <div>
+                <div class="flex items-center gap-2 text-xs font-mono font-bold tabular-nums">
+                  <span>Linhas Escritas: <strong id="line-count-number" class="text-sm text-itamaraty-emerald-700 dark:text-emerald-400">64</strong> / 90</span>
+                  <span id="line-zone-badge" class="px-2 py-0.5 rounded text-[10px] bg-itamaraty-emerald-700 text-white">ZONA IDEAL (60–90)</span>
+                </div>
+                <div class="w-44 h-2 rounded-full bg-slate-300 dark:bg-slate-800 mt-1 overflow-hidden">
+                  <div id="line-progress-bar" class="h-full bg-itamaraty-emerald-500 transition-all" style="width: 71%"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Botões para Testar a Folha Pautada -->
+            <div class="flex items-center gap-2">
+              <button onclick="loadModelEssay('full')" class="theme-btn-primary px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs">
+                <i data-lucide="file-check" class="w-3.5 h-3.5"></i>
+                <span>Carregar Resposta Modelo (65 Linhas)</span>
+              </button>
+              <button onclick="clearEssayPaper()" class="px-2.5 py-2 rounded-xl border border-[#E5DEC9] dark:border-[#18304E] text-xs font-medium hover:opacity-80 transition">
+                Limpar
+              </button>
+            </div>
+          </div>
+
+          <!-- VISÃO A: ESTÁGIO 1 (ESQUELETO DE PARÁGRAFOS) -->
+          <div id="stage-skeleton-view" class="hidden theme-card rounded-2xl border p-5 space-y-4">
+            <div class="flex items-center justify-between">
+              <h3 class="font-serif font-bold text-base">Plano Estrutural de Parágrafos (Modo Esqueleto)</h3>
+              <span class="font-mono text-xs text-itamaraty-emerald-700 dark:text-emerald-400 font-semibold">Coerência Causal Validada: 9,6 / 10</span>
+            </div>
+            <div class="space-y-3 text-xs">
+              <div class="theme-elevated p-3.5 rounded-xl border space-y-1">
+                <span class="font-mono font-bold text-itamaraty-gold-600 dark:text-itamaraty-gold-400">PARÁGRAFO 1 (LINHAS 01–16) • DIAGNÓSTICO E PAI</span>
+                <p class="font-serif text-sm">Tese de Arida & Lara Resende (inflação inercial e conflito distributivo defasado) + ajuste fiscal prévio via Programa de Ação Imediata (PAI) e Fundo Social de Emergência (FSE).</p>
+              </div>
+              <div class="theme-elevated p-3.5 rounded-xl border space-y-1">
+                <span class="font-mono font-bold text-itamaraty-gold-600 dark:text-itamaraty-gold-400">PARÁGRAFO 2 (LINHAS 17–34) • A ENGENHARIA DA URV</span>
+                <p class="font-serif text-sm">A URV como superindexador diário atrelado à paridade cambial: sincronização de salários, tarifas e contratos em uma moeda-índice estável antes da emissão do Real em 1º de julho de 1994.</p>
+              </div>
+              <div class="theme-elevated p-3.5 rounded-xl border space-y-1">
+                <span class="font-mono font-bold text-itamaraty-gold-600 dark:text-itamaraty-gold-400">PARÁGRAFO 3 (LINHAS 35–52) • ÂNCORA CAMBIAL, MUNDELL-FLEMING E ESTERILIZAÇÃO</span>
+                <p class="font-serif text-sm">Apreciação cambial + abertura comercial como freio aos bens comercializáveis (tradables). Deterioração das Transações Correntes financiada por juros reais elevados (Conta Financeira) e esterilização que elevou a dívida mobiliária.</p>
+              </div>
+              <div class="theme-elevated p-3.5 rounded-xl border space-y-1">
+                <span class="font-mono font-bold text-itamaraty-gold-600 dark:text-itamaraty-gold-400">PARÁGRAFO 4 (LINHAS 53–68) • CRISES EXTERNAS E TRIPÉ DE 1999</span>
+                <p class="font-serif text-sm">Choques do México (1994), Ásia (1997) e moratória da Rússia (1998). Perda de reservas no regime de bandas, flutuação cambial em janeiro de 1999 e institucionalização do Tripé Macroeconômico.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- VISÃO B: ESTÁGIO 3 (FOLHA PAUTADA OFICIAL DO INSTITUTO RIO BRANCO) -->
+          <div id="stage-paper-view" class="cacd-ruled-container rounded-2xl shadow-lg overflow-hidden">
+            <!-- Cabeçalho da Folha Oficial de Prova -->
+            <div class="px-5 py-3 border-b border-[#E5DEC9] dark:border-[#18304E] bg-[#F3EFE6] dark:bg-[#0F1E32] flex items-center justify-between text-xs font-mono">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-itamaraty-carmine-700 dark:bg-itamaraty-gold-500"></span>
+                <span class="font-bold">CADERNO DE PROVA DISCURSIVA — 3ª FASE (ECONOMIA)</span>
+              </div>
+              <span id="word-char-counter" class="opacity-75 tabular-nums">642 palavras • 4.180 caracteres</span>
+            </div>
+
+            <!-- Corpo Rolável com Numeração Lateral 01 a 90 + Textarea Pautado -->
+            <div class="max-h-[620px] overflow-y-auto flex relative">
+              <!-- Coluna de Numeração das Linhas (01 a 90) -->
+              <div id="ruled-line-numbers" class="cacd-line-numbers shrink-0 text-right pr-2.5 font-mono text-[11px] opacity-60 tabular-nums">
+                <!-- Preenchido de 01 a 90 via JS -->
+              </div>
+
+              <!-- Área de Escrita Pautada -->
+              <textarea
+                id="cacd-essay-textarea"
+                rows="90"
+                oninput="updateEssayStats()"
+                spellcheck="false"
+                class="cacd-ruled-textarea"
+                placeholder="Inicie sua dissertação respeitando as margens e a norma culta diplomática..."
+              ></textarea>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- COLUNA DIREITA: ESPELHO DE CORREÇÃO DA BANCA + REESCRITA DIPLOMÁTICA -->
+        <div class="lg:col-span-5 space-y-5">
+          
+          <!-- Card de Nota Líquida Estilo Banca -->
+          <div class="theme-card rounded-2xl border p-5 space-y-4">
+            <div class="flex items-center justify-between border-b border-[#E5DEC9] dark:border-[#18304E] pb-3">
+              <div>
+                <span class="font-mono text-[11px] uppercase tracking-wider text-itamaraty-gold-600 dark:text-itamaraty-gold-400 font-bold">
+                  Avaliação Multimodal RAG + Espelho Oficial
+                </span>
+                <h3 class="font-serif text-lg font-bold">Parecer da Banca Examinadora</h3>
+              </div>
+              <div class="text-right font-mono">
+                <span class="text-2xl font-bold text-itamaraty-emerald-700 dark:text-emerald-400 tabular-nums">28,65</span>
+                <span class="text-xs opacity-70"> / 30,00</span>
+              </div>
+            </div>
+
+            <!-- Decomposição por Subcomando -->
+            <div class="space-y-2.5 text-xs">
+              <div class="theme-elevated p-3 rounded-xl border">
+                <div class="flex items-center justify-between font-mono font-bold">
+                  <span>Item a) Inflação Inercial, PAI e URV</span>
+                  <span class="text-itamaraty-emerald-700 dark:text-emerald-400">10,00 / 10,00</span>
+                </div>
+                <p class="mt-1 opacity-80 leading-relaxed">
+                  Excelente citação à proposta Larida (Arida e Lara Resende) e distinção entre congelamento heterodoxo e alinhamento voluntário de preços relativos pela URV.
+                </p>
+                <div class="mt-1.5 font-mono text-[10px] text-itamaraty-gold-600 dark:text-itamaraty-gold-300">
+                  ✓ Fonte RAG verificada: Giambiagi et al. (Cap. 6, p. 145) & Abreu (Cap. 14)
+                </div>
+              </div>
+
+              <div class="theme-elevated p-3 rounded-xl border">
+                <div class="flex items-center justify-between font-mono font-bold">
+                  <span>Item b) Âncora Cambial e Esterilização</span>
+                  <span class="text-itamaraty-emerald-700 dark:text-emerald-400">11,20 / 12,00</span>
+                </div>
+                <p class="mt-1 opacity-80 leading-relaxed">
+                  Articulou corretamente a apreciação real com o déficit em Transações Correntes e o custo quase-fiscal da esterilização. Poderia explicitar a sigla da DLSP (Dívida Líquida do Setor Público).
+                </p>
+              </div>
+
+              <div class="theme-elevated p-3 rounded-xl border">
+                <div class="flex items-center justify-between font-mono font-bold">
+                  <span>Item c) Crises Externas e Tripé de 1999</span>
+                  <span class="text-itamaraty-emerald-700 dark:text-emerald-400">7,80 / 8,00</span>
+                </div>
+                <p class="mt-1 opacity-80 leading-relaxed">
+                  Precisa enumeração dos choques (Tequila 1994, Asiático 1997, Russo 1998) e dos três pilares institucionais de 1999 (câmbio flutuante, metas de inflação e superávit primário).
+                </p>
+              </div>
+
+              <div class="flex items-center justify-between px-3 py-2 rounded-lg bg-itamaraty-carmine-700/10 border border-itamaraty-carmine-700/30 font-mono text-xs">
+                <span>Penalidade de Norma Culta (NE / TL):</span>
+                <span class="font-bold text-itamaraty-carmine-700 dark:text-rose-400">-0,35 pt (1 desvio de regência)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card de Reescrita Diplomática Sugerida -->
+          <div class="theme-card rounded-2xl border p-5 space-y-3">
+            <div class="flex items-center gap-2">
+              <i data-lucide="sparkles" class="w-4 h-4 text-itamaraty-gold-600 dark:text-itamaraty-gold-400"></i>
+              <h4 class="font-serif font-bold text-base">Lapidação de Estilo Diplomático (Padrão Chancelaria)</h4>
+            </div>
+
+            <div class="p-3 rounded-xl bg-itamaraty-carmine-700/10 border border-itamaraty-carmine-700/30 text-xs space-y-1">
+              <span class="font-mono text-[10px] uppercase font-bold text-itamaraty-carmine-700 dark:text-rose-300">Trecho Original (Coloquial / Repetitivo):</span>
+              <p class="font-serif italic opacity-90">
+                "Como entravam muitos dólares por causa dos juros altos, o Banco Central comprava esses dólares e vendia títulos públicos, o que fez a dívida pública crescer muito."
+              </p>
+            </div>
+
+            <div class="p-3 rounded-xl bg-itamaraty-emerald-700/10 border border-itamaraty-emerald-700/30 text-xs space-y-1">
+              <span class="font-mono text-[10px] uppercase font-bold text-itamaraty-emerald-700 dark:text-emerald-300">Reescrita Diplomática Sugerida:</span>
+              <p class="font-serif font-medium">
+                "A fim de impedir que a monetização dos expressivos superávits na Conta Financeira deprimisse a taxa de juros doméstica, a autoridade monetária recorreu à esterilização sistemática mediante emissão de títulos públicos, convertendo acumulação de reservas em expansão da dívida mobiliária federal."
+              </p>
+            </div>
+
+            <button onclick="copyToast('Reescrita diplomática copiada para o fichamento!')" class="w-full py-2.5 rounded-xl border border-itamaraty-gold-500/60 text-xs font-bold text-itamaraty-gold-600 dark:text-itamaraty-gold-300 hover:bg-itamaraty-gold-500/10 transition flex items-center justify-center gap-2">
+              <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+              <span>Copiar Reescrita para o Caderno de Repertório</span>
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================================================================
+         ABA 2: INSÍGNIAS DA CARREIRA DIPLOMÁTICA & TRILHA DE ECONOMIA
+         =================================================================== -->
+    <div id="tab-insignias" class="tab-panel hidden space-y-8">
+      
+      <!-- Seção Superior: Galeria Interativa das 5 Insígnias da Ordem de Rio Branco -->
+      <div class="theme-card rounded-2xl border p-6 space-y-5">
+        <div class="flex flex-wrap items-center justify-between gap-4 border-b border-[#E5DEC9] dark:border-[#18304E] pb-4">
+          <div>
+            <span class="font-mono text-xs font-bold uppercase tracking-wider text-itamaraty-gold-600 dark:text-itamaraty-gold-400">
+              Sistema de Progressão Institucional (Sem Gamificação Infantil)
+            </span>
+            <h2 class="font-serif text-2xl font-bold mt-1">
+              Insígnias da Carreira de Diplomata (Ordem de Rio Branco)
+            </h2>
+            <p class="text-xs opacity-80 mt-0.5">
+              Clique em qualquer patente abaixo para inspecionar os requisitos de desbloqueio e testar a insígnia no cabeçalho do sistema.
+            </p>
+          </div>
+          <span id="selected-rank-pill" class="font-mono text-xs px-3 py-1.5 rounded-xl bg-itamaraty-navy-900 text-itamaraty-gold-300 border border-itamaraty-gold-500/50">
+            Selecionado: Terceiro-Secretário
+          </span>
+        </div>
+
+        <!-- Grid das 5 Insígnias em SVG Vetorial Rico -->
+        <div id="ranks-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <!-- Renderizado via JS -->
+        </div>
+      </div>
+
+      <!-- Seção Inferior: Os 5 Módulos de Economia com Capas Editoriais SVG -->
+      <div class="space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <span class="font-mono text-xs uppercase font-bold text-itamaraty-emerald-700 dark:text-emerald-400">
+              Arquitetura Pedagógica em Camadas
+            </span>
+            <h3 class="font-serif text-xl sm:text-2xl font-bold">
+              Trilha Completa de Economia (Módulos 0 a 4 — Capas Editoriais FUNAG)
+            </h3>
+          </div>
+        </div>
+
+        <div id="modules-cards-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <!-- Renderizado via JS com gravuras SVG exclusivas -->
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ===================================================================
+         ABA 3: TRADUTOR DE GRÁFICOS (CORES PADRONIZADAS) & ARENA TPS
+         =================================================================== -->
+    <div id="tab-graficos" class="tab-panel hidden space-y-6">
+      
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        <!-- COLUNA ESQUERDA (7 COLUNAS): TRADUTOR DE GRÁFICOS COM TOKENS SEMÂNTICOS -->
+        <div class="lg:col-span-7 theme-card rounded-2xl border p-6 space-y-5">
+          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-[#E5DEC9] dark:border-[#18304E] pb-4">
+            <div>
+              <span class="font-mono text-xs font-bold uppercase text-itamaraty-gold-600 dark:text-itamaraty-gold-400">
+                Código Cromático Padronizado (Memória Visual)
+              </span>
+              <h2 class="font-serif text-xl font-bold mt-0.5">
+                Modelo Mundell-Fleming (IS-LM-BP) Passo a Passo
+              </h2>
+            </div>
+
+            <!-- Legenda Oficial de Cores das Curvas -->
+            <div class="flex flex-wrap items-center gap-2 font-mono text-[11px] font-bold">
+              <span class="px-2.5 py-1 rounded-lg bg-[#08111D] text-[#F59E0B] border border-[#F59E0B]/50">IS: #F59E0B</span>
+              <span class="px-2.5 py-1 rounded-lg bg-[#08111D] text-[#38BDF8] border border-[#38BDF8]/50">LM: #38BDF8</span>
+              <span class="px-2.5 py-1 rounded-lg bg-[#08111D] text-[#10B981] border border-[#10B981]/50">BP: #10B981</span>
+              <span class="px-2.5 py-1 rounded-lg bg-[#08111D] text-[#F97316] border border-[#F97316]/50">Choque: #F97316</span>
+            </div>
+          </div>
+
+          <!-- Seletor de Cenários Clássicos de Prova -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <button onclick="selectGraphScenario('flutuante_fiscal')" id="scn-flutuante_fiscal" class="scn-btn p-3 rounded-xl border text-left text-xs transition theme-btn-primary font-bold">
+              1. Expansão Fiscal no Câmbio Flutuante (Crowding-Out Externo)
+            </button>
+            <button onclick="selectGraphScenario('flutuante_monetaria')" id="scn-flutuante_monetaria" class="scn-btn p-3 rounded-xl border border-[#E5DEC9] dark:border-[#18304E] text-left text-xs transition hover:opacity-90">
+              2. Expansão Monetária no Câmbio Flutuante (Eficácia Máxima)
+            </button>
+            <button onclick="selectGraphScenario('fixo_fiscal')" id="scn-fixo_fiscal" class="scn-btn p-3 rounded-xl border border-[#E5DEC9] dark:border-[#18304E] text-left text-xs transition hover:opacity-90">
+              3. Expansão Fiscal no Câmbio Fixo (Compra de Reservas / ↑LM)
+            </button>
+            <button onclick="selectGraphScenario('fixo_monetaria')" id="scn-fixo_monetaria" class="scn-btn p-3 rounded-xl border border-[#E5DEC9] dark:border-[#18304E] text-left text-xs transition hover:opacity-90">
+              4. Expansão Monetária no Câmbio Fixo (Perda de Reservas)
+            </button>
+          </div>
+
+          <!-- Quadro do Gráfico SVG em Fundo Chancelaria (#08111D) para Contraste Máximo das Curvas -->
+          <div class="rounded-2xl bg-[#08111D] border border-[#18304E] p-4 shadow-inner space-y-4">
+            <svg id="standardized-econ-svg" viewBox="0 0 500 320" class="w-full h-auto select-none">
+              <!-- Grade sutil -->
+              <g stroke="#18304E" stroke-width="1">
+                <line x1="65" y1="60" x2="450" y2="60" />
+                <line x1="65" y1="160" x2="450" y2="160" />
+                <line x1="65" y1="260" x2="450" y2="260" />
+                <line x1="160" y1="30" x2="160" y2="280" />
+                <line x1="255" y1="30" x2="255" y2="280" />
+                <line x1="350" y1="30" x2="350" y2="280" />
+              </g>
+
+              <!-- Eixos -->
+              <line x1="65" y1="280" x2="465" y2="280" stroke="#94A3B8" stroke-width="2" />
+              <line x1="65" y1="280" x2="65" y2="25" stroke="#94A3B8" stroke-width="2" />
+              <text x="460" y="302" text-anchor="end" font-family="JetBrains Mono" font-size="11" font-weight="700" fill="#F3EFE6">
+                Renda / Produto Real (Y)
+              </text>
+              <text x="75" y="35" font-family="JetBrains Mono" font-size="11" font-weight="700" fill="#F3EFE6">
+                Taxa de Juros (i)
+              </text>
+
+              <!-- Camada Dinâmica das Curvas IS (#F59E0B), LM (#38BDF8), BP (#10B981) e Choque (#F97316) -->
+              <g id="standardized-svg-layer"></g>
+            </svg>
+
+            <!-- Botões de Passo 0 a Passo 3 -->
+            <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-[#18304E]">
+              <div class="flex items-center gap-1.5">
+                <button onclick="setGraphStep(0)" id="gstep-0" class="px-3 py-1.5 rounded-lg font-mono text-xs font-bold bg-[#C59B27] text-[#08111D]">
+                  Passo 0 (E₀)
+                </button>
+                <button onclick="setGraphStep(1)" id="gstep-1" class="px-3 py-1.5 rounded-lg font-mono text-xs font-medium bg-[#0F1E32] text-[#F3EFE6] hover:bg-[#18304E]">
+                  Passo 1 (Choque)
+                </button>
+                <button onclick="setGraphStep(2)" id="gstep-2" class="px-3 py-1.5 rounded-lg font-mono text-xs font-medium bg-[#0F1E32] text-[#F3EFE6] hover:bg-[#18304E]">
+                  Passo 2 (Setor Externo)
+                </button>
+                <button onclick="setGraphStep(3)" id="gstep-3" class="px-3 py-1.5 rounded-lg font-mono text-xs font-medium bg-[#0F1E32] text-[#F3EFE6] hover:bg-[#18304E]">
+                  Passo 3 (Final E₂)
+                </button>
+              </div>
+              <span id="graph-verdict-pill" class="font-mono text-xs px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                <!-- Preenchido via JS -->
+              </span>
+            </div>
+          </div>
+
+          <!-- Caixa de Explicação Causal da Etapa Ativa -->
+          <div class="theme-elevated rounded-xl border p-4 space-y-2">
+            <div class="flex items-center justify-between">
+              <span id="graph-step-title" class="font-mono text-xs font-bold uppercase text-itamaraty-gold-600 dark:text-itamaraty-gold-400">
+                PASSO 3: RETORNO AO EQUILÍBRIO INICIAL
+              </span>
+              <span id="graph-bp-impact" class="font-mono text-[11px] px-2 py-0.5 rounded bg-itamaraty-emerald-700/15 text-itamaraty-emerald-700 dark:text-emerald-300 font-semibold">
+                BPM6: ↑CF compensado por ↓TC (ΔR = 0)
+              </span>
+            </div>
+            <p id="graph-step-desc" class="font-serif text-sm leading-relaxed">
+              <!-- Preenchido via JS -->
+            </p>
+          </div>
+        </div>
+
+        <!-- COLUNA DIREITA (5 COLUNAS): ARENA TPS + ALERTA CARMIM DIPLOMÁTICO -->
+        <div class="lg:col-span-5 theme-card rounded-2xl border p-6 space-y-5">
+          <div class="border-b border-[#E5DEC9] dark:border-[#18304E] pb-4">
+            <span class="font-mono text-xs font-bold uppercase text-itamaraty-carmine-700 dark:text-rose-400">
+              Validação de Alertas & Caderno de Erros
+            </span>
+            <h2 class="font-serif text-xl font-bold mt-0.5">
+              Arena TPS (1ª Fase) + Termômetro de Confiança
+            </h2>
+          </div>
+
+          <!-- Enunciado do Item TPS -->
+          <div class="theme-elevated rounded-xl border p-4 space-y-2">
+            <div class="flex items-center justify-between font-mono text-[11px] opacity-75">
+              <span>PROVA TPS CACD • ECONOMIA INTERNACIONAL</span>
+              <span>ITEM #34</span>
+            </div>
+            <p class="font-serif text-base leading-relaxed">
+              "À luz do modelo Mundell-Fleming com regime de câmbio flutuante e perfeita mobilidade internacional de capitais, uma expansão dos gastos governamentais eleva permanentemente a taxa de juros doméstica, deprimindo o investimento privado sem alterar o saldo da balança comercial."
+            </p>
+          </div>
+
+          <!-- 1. Botões de Julgamento C / E / Branco -->
+          <div class="space-y-2">
+            <label class="font-mono text-[11px] uppercase font-bold opacity-75 block">1. Julgamento do Item:</label>
+            <div class="grid grid-cols-3 gap-2.5">
+              <button onclick="selectTpsChoice('C')" id="tps-btn-C" class="py-2.5 px-3 rounded-xl border border-[#E5DEC9] dark:border-[#18304E] font-bold text-xs transition hover:border-itamaraty-emerald-500">
+                Certo (C)
+              </button>
+              <button onclick="selectTpsChoice('E')" id="tps-btn-E" class="py-2.5 px-3 rounded-xl border border-[#E5DEC9] dark:border-[#18304E] font-bold text-xs transition hover:border-itamaraty-carmine-500">
+                Errado (E)
+              </button>
+              <button onclick="selectTpsChoice('B')" id="tps-btn-B" class="py-2.5 px-3 rounded-xl border border-[#E5DEC9] dark:border-[#18304E] font-medium text-xs transition">
+                Deixar em Branco
+              </button>
+            </div>
+          </div>
+
+          <!-- 2. Termômetro de Confiança -->
+          <div class="space-y-2">
+            <label class="font-mono text-[11px] uppercase font-bold opacity-75 block">2. Grau de Confiança (Aciona FSRS se Dúvida/Chute):</label>
+            <div class="grid grid-cols-3 gap-2">
+              <button onclick="selectConfidence('certain')" id="conf-certain" class="py-2 px-2.5 rounded-lg border text-xs font-semibold theme-btn-primary">
+                Certeza Consciente
+              </button>
+              <button onclick="selectConfidence('doubt')" id="conf-doubt" class="py-2 px-2.5 rounded-lg border border-[#E5DEC9] dark:border-[#18304E] text-xs font-medium">
+                Dúvida (50/50)
+              </button>
+              <button onclick="selectConfidence('guess')" id="conf-guess" class="py-2 px-2.5 rounded-lg border border-[#E5DEC9] dark:border-[#18304E] text-xs font-medium">
+                Chute
+              </button>
+            </div>
+          </div>
+
+          <!-- Caixa de Alerta em Carmim Diplomático (#9E2A2B) -->
+          <div id="tps-feedback-card" class="p-4 rounded-xl bg-[#9E2A2B]/12 dark:bg-[#9E2A2B]/25 border border-[#9E2A2B] space-y-2.5">
+            <div class="flex items-center justify-between">
+              <span class="font-mono text-xs font-bold uppercase text-[#9E2A2B] dark:text-rose-300 flex items-center gap-1.5">
+                <i data-lucide="shield-alert" class="w-4 h-4"></i>
+                Armadilha Clássica da Banca Detectada (Gabarito: ERRADO)
+              </span>
+            </div>
+            <p class="text-xs leading-relaxed">
+              <strong>Diagnóstico RAG:</strong> O item troca o <em>crowding-out cambial</em> pelo <em>crowding-out financeiro</em>. Sob perfeita mobilidade ($i = i^*$), a taxa de juros doméstica <strong>não sobe permanentemente</strong> e o investimento privado não cai: a apreciação cambial contrai as exportações líquidas ($\downarrow NX = -\Delta G$), deteriorando a balança comercial!
+            </p>
+            <div class="pt-1 flex items-center justify-between text-[11px] font-mono text-itamaraty-emerald-700 dark:text-emerald-300">
+              <span>✓ Enviado ao Caderno de Erros</span>
+              <span>✓ Flashcard FSRS agendado (+1 dia)</span>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ===================================================================
+         ABA 4: ESPECIFICAÇÃO DO DESIGN SYSTEM (STYLE GUIDE INTERATIVO)
+         =================================================================== -->
+    <div id="tab-styleguide" class="tab-panel hidden space-y-8">
+      
+      <!-- Seção 1: Paleta de Cores Semântica (Clique para Copiar HEX) -->
+      <div class="theme-card rounded-2xl border p-6 space-y-6">
+        <div class="border-b border-[#E5DEC9] dark:border-[#18304E] pb-4 flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <span class="font-mono text-xs font-bold uppercase text-itamaraty-gold-600 dark:text-itamaraty-gold-400">
+              Tokens Oficiais Tailwind CSS
+            </span>
+            <h2 class="font-serif text-2xl font-bold mt-0.5">
+              Paleta Cromática "Itamaraty / Rio Branco"
+            </h2>
+          </div>
+          <span class="font-mono text-xs opacity-75">Clique em qualquer amostra para copiar o código HEX</span>
+        </div>
+
+        <div id="color-swatches-container" class="space-y-6">
+          <!-- Renderizado via JS -->
+        </div>
+      </div>
+
+      <!-- Seção 2: Escala Tipográfica Editorial e Monoespaçada -->
+      <div class="theme-card rounded-2xl border p-6 space-y-5">
+        <div class="border-b border-[#E5DEC9] dark:border-[#18304E] pb-3">
+          <span class="font-mono text-xs font-bold uppercase text-itamaraty-emerald-700 dark:text-emerald-400">
+            Hierarquia Editorial FUNAG / CHDD
+          </span>
+          <h3 class="font-serif text-xl font-bold mt-0.5">Tríade Tipográfica do Sistema</h3>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div class="theme-elevated p-5 rounded-xl border space-y-2">
+            <span class="font-mono text-xs px-2 py-0.5 rounded bg-itamaraty-navy-600 text-white">font-serif • Newsreader</span>
+            <h4 class="font-serif text-2xl font-bold pt-1">A Ordem do Progresso</h4>
+            <p class="font-serif text-sm leading-relaxed opacity-90">
+              Utilizada nos textos teóricos, enunciados do TPS, citações de Celso Furtado e na folha pautada de 90 linhas. Garante conforto ocular em leituras longas (`line-height: 1.75`, largura `68ch`).
+            </p>
+          </div>
+
+          <div class="theme-elevated p-5 rounded-xl border space-y-2">
+            <span class="font-mono text-xs px-2 py-0.5 rounded bg-itamaraty-emerald-700 text-white">font-sans • Plus Jakarta Sans</span>
+            <h4 class="font-sans text-xl font-bold pt-1">Navegação e Controles de UI</h4>
+            <p class="font-sans text-sm leading-relaxed opacity-90">
+              Aplicada em botões, menus laterais, filtros de módulos, gaveta do Tutor IA e indicadores de confiança. Geometria limpa de alta legibilidade em telas desktop e mobile.
+            </p>
+          </div>
+
+          <div class="theme-elevated p-5 rounded-xl border space-y-2">
+            <span class="font-mono text-xs px-2 py-0.5 rounded bg-itamaraty-gold-600 text-white">font-mono • JetBrains Mono</span>
+            <h4 class="font-mono text-lg font-bold pt-1 tabular-nums">TC + CK + CF + ΔR = 0</h4>
+            <p class="font-mono text-xs leading-relaxed opacity-90">
+              Dedicada a identidades macroeconômicas, códigos do edital (`MOD-3 • 3.3`), numeração lateral das 90 linhas pautadas e métricas FSRS com `tabular-nums`.
+            </p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Toast Flutuante -->
+  <div id="toast-box" class="fixed bottom-5 right-5 z-50 hidden bg-[#08111D] text-[#F3EFE6] px-4 py-3 rounded-xl shadow-2xl border border-[#C59B27] text-xs font-mono items-center gap-2.5">
+    <span class="w-2 h-2 rounded-full bg-[#C59B27]"></span>
+    <span id="toast-text">Copiado!</span>
+  </div>
+
+  <!-- =====================================================================
+       SCRIPT DE INTERATIVIDADE COMPLETA (JAVASCRIPT)
+       ===================================================================== -->
+  <script>
+    // =========================================================================
+    // 1. DADOS DAS 5 INSÍGNIAS DA CARREIRA DIPLOMÁTICA (ORDEM DE RIO BRANCO)
+    // =========================================================================
+    const careerRanks = [
+      {
+        id: '3-sec',
+        title: 'Terceiro-Secretário',
+        stars: 1,
+        statusEnum: 'studying_base',
+        condition: 'Desbloqueado ao concluir o Módulo 0 (Fundação e Leitura de Gráficos)',
+        description: 'Ingresso na carreira no Instituto Rio Branco. Domínio dos conceitos-base (variáveis reais vs. nominais e deslocamento de curvas).'
+      },
+      {
+        id: '2-sec',
+        title: 'Segundo-Secretário',
+        stars: 2,
+        statusEnum: 'studying_advanced',
+        condition: 'Concluir 50% dos tópicos na Camada 2 (Rigor CACD)',
+        description: 'Domínio intermediário de Microeconomia, Contabilidade Nacional e modelo IS-LM fechado.'
+      },
+      {
+        id: '1-sec',
+        title: 'Primeiro-Secretário',
+        stars: 3,
+        statusEnum: 'reviewing',
+        condition: '100% da Trilha concluída + Estabilidade média FSRS > 14 dias',
+        description: 'Retenção consolidada no Balanço de Pagamentos (BPM6), Mundell-Fleming e História Econômica do Brasil.'
+      },
+      {
+        id: 'conselheiro',
+        title: 'Conselheiro',
+        stars: 4,
+        statusEnum: 'reviewing_high',
+        condition: 'Taxa de Acerto Líquido no Simulador TPS ≥ 75% (Certos - Errados)',
+        description: 'Blindagem completa contra pegadinhas de inversão causal da banca Cebraspe/IADES.'
+      },
+      {
+        id: 'embaixador',
+        title: 'Ministro de 1ª Classe (Embaixador)',
+        stars: 5,
+        statusEnum: 'mastered',
+        condition: 'Média ≥ 26/30 pts nas Discursivas de 60–90 linhas de 3ª Fase',
+        description: 'Grã-Cruz da Ordem de Rio Branco. Capacidade de articular teoria macroeconômica e historiografia em padrão de excelência.'
+      }
+    ];
+
+    // =========================================================================
+    // 2. DADOS DOS 5 MÓDULOS DE ECONOMIA COM GRAVURAS SVG EDITORIAIS
+    // =========================================================================
+    const econModules = [
+      {
+        code: 'MÓDULO 0',
+        title: 'Fundação e Instrumental Econômico',
+        subtitle: 'Escassez, FPP, Reais vs. Nominais e Movimento vs. Deslocamento',
+        fsrsStability: '94% Estável',
+        progress: 100,
+        badge: 'Concluído • Base Zero',
+        svgArt: `
+          <svg viewBox="0 0 240 120" class="w-full h-32 rounded-xl bg-[#0F1E32] border border-[#18304E]">
+            <rect width="240" height="120" fill="url(#athos-bulcao-pattern)" class="text-[#C59B27]" />
+            <line x1="30" y1="95" x2="210" y2="95" stroke="#E5DEC9" stroke-width="1" opacity="0.3" />
+            <!-- Balança de precisão e bússola em ouro -->
+            <circle cx="120" cy="60" r="34" fill="none" stroke="#C59B27" stroke-width="1.5" stroke-dasharray="4 2" />
+            <line x1="120" y1="22" x2="120" y2="95" stroke="#E5C76B" stroke-width="2" />
+            <line x1="80" y1="48" x2="160" y2="48" stroke="#E5C76B" stroke-width="2" />
+            <path d="M80,48 L70,72 L90,72 Z" fill="#108565" opacity="0.85" stroke="#E5C76B" stroke-width="1" />
+            <path d="M160,48 L150,72 L170,72 Z" fill="#1E4471" stroke="#E5C76B" stroke-width="1" />
+            <circle cx="120" cy="48" r="4" fill="#E5C76B" />
+          </svg>
+        `
+      },
+      {
+        code: 'MÓDULO 1',
+        title: 'Microeconomia Aplicada',
+        subtitle: 'Consumidor, Elasticidades, Custos, Monopólio, Oligopólio e Falhas de Mercado',
+        fsrsStability: '82% Estável',
+        progress: 85,
+        badge: '6 Tópicos • Ponto 1 Edital',
+        svgArt: `
+          <svg viewBox="0 0 240 120" class="w-full h-32 rounded-xl bg-[#0F1E32] border border-[#18304E]">
+            <g stroke="#18304E" stroke-width="1">
+              <line x1="45" y1="20" x2="45" y2="100" />
+              <line x1="45" y1="100" x2="205" y2="100" />
+            </g>
+            <!-- Curvas de Oferta e Demanda em fios dourados e esmeralda -->
+            <path d="M60,30 Q115,65 190,92" fill="none" stroke="#F59E0B" stroke-width="2.5" />
+            <path d="M60,92 Q115,65 190,30" fill="none" stroke="#38BDF8" stroke-width="2.5" />
+            <!-- Triângulo de Peso Morto / Excedente -->
+            <polygon points="122,61 90,46 90,77" fill="#108565" opacity="0.45" />
+            <circle cx="122" cy="61" r="4.5" fill="#E5C76B" />
+            <text x="193" y="34" font-family="JetBrains Mono" font-size="9" fill="#38BDF8">S</text>
+            <text x="193" y="94" font-family="JetBrains Mono" font-size="9" fill="#F59E0B">D</text>
+          </svg>
+        `
+      },
+      {
+        code: 'MÓDULO 2',
+        title: 'Macroeconomia Fechada e Moeda',
+        subtitle: 'Contas Nacionais, BACEN, Clássicos vs. Keynes, IS-LM, Phillips e Solow',
+        fsrsStability: '78% Estável',
+        progress: 70,
+        badge: '6 Tópicos • Pontos 2 e 3',
+        svgArt: `
+          <svg viewBox="0 0 240 120" class="w-full h-32 rounded-xl bg-[#0F1E32] border border-[#18304E]">
+            <!-- Silhueta estilizada do Edifício-Sede do Banco Central em Brasília -->
+            <circle cx="120" cy="60" r="40" fill="none" stroke="#1E4471" stroke-width="1.5" />
+            <circle cx="120" cy="60" r="30" fill="none" stroke="#C59B27" stroke-width="1" stroke-dasharray="3 3" />
+            <rect x="106" y="24" width="28" height="72" fill="#18304E" stroke="#E5C76B" stroke-width="1.5" />
+            <rect x="98" y="34" width="44" height="10" fill="#0F1E32" stroke="#E5C76B" stroke-width="1.2" />
+            <line x1="120" y1="24" x2="120" y2="96" stroke="#C59B27" stroke-width="1" />
+          </svg>
+        `
+      },
+      {
+        code: 'MÓDULO 3',
+        title: 'Economia Internacional, Câmbio e BP',
+        subtitle: 'Balanço de Pagamentos (BPM6), Regimes Cambiais, Mundell-Fleming e Comércio',
+        fsrsStability: 'Em Estudo Ativo',
+        progress: 60,
+        badge: '5 Tópicos • Ponto 4 Edital',
+        svgArt: `
+          <svg viewBox="0 0 240 120" class="w-full h-32 rounded-xl bg-[#0F1E32] border border-[#18304E]">
+            <!-- Esfera Armilar / Globo Diplomático -->
+            <circle cx="120" cy="60" r="36" fill="#07362A" opacity="0.5" stroke="#10B981" stroke-width="1.5" />
+            <ellipse cx="120" cy="60" rx="36" ry="14" fill="none" stroke="#E5C76B" stroke-width="1.4" />
+            <ellipse cx="120" cy="60" rx="16" ry="36" fill="none" stroke="#E5C76B" stroke-width="1.4" />
+            <line x1="72" y1="60" x2="168" y2="60" stroke="#38BDF8" stroke-width="1.5" />
+            <circle cx="120" cy="60" r="4" fill="#F59E0B" />
+          </svg>
+        `
+      },
+      {
+        code: 'MÓDULO 4',
+        title: 'História Econômica do Brasil (1889–2026)',
+        subtitle: 'Café, Era Vargas (ISI), JK, PAEG, II PND, Planos Heterodoxos, Plano Real e Tripé',
+        fsrsStability: 'Alta Prioridade 3ª Fase',
+        progress: 50,
+        badge: '8 Tópicos • Pontos 5 e 6',
+        svgArt: `
+          <svg viewBox="0 0 240 120" class="w-full h-32 rounded-xl bg-[#0F1E32] border border-[#18304E]">
+            <!-- Transição: Ramo de Café -> Engrenagem Industrial -> Gráfico Plano Real -->
+            <path d="M35,85 Q55,55 75,35" fill="none" stroke="#10B981" stroke-width="2" />
+            <ellipse cx="48" cy="68" rx="7" ry="4" transform="rotate(-30 48 68)" fill="#10B981" />
+            <ellipse cx="64" cy="50" rx="7" ry="4" transform="rotate(-30 64 50)" fill="#10B981" />
+            <circle cx="120" cy="60" r="18" fill="none" stroke="#E5C76B" stroke-width="2.5" stroke-dasharray="6 4" />
+            <circle cx="120" cy="60" r="8" fill="#1E4471" stroke="#E5C76B" stroke-width="1.5" />
+            <polyline points="158,85 175,45 192,65 212,30" fill="none" stroke="#F59E0B" stroke-width="2.5" />
+            <circle cx="212" cy="30" r="4" fill="#F59E0B" />
+          </svg>
+        `
+      }
+    ];
+
+    // =========================================================================
+    // 3. TEXTO MODELO DE 3ª FASE (PLANO REAL, URV E CRISE DE 1999)
+    // =========================================================================
+    const modelEssayText = `A estabilização monetária alcançada pelo Plano Real entre 1993 e 1994 representou uma inflexão paradigmática na história econômica brasileira ao superar o fracasso dos planos heterodoxos da década de 1980. Conforme diagnosticado originalmente por Pérsio Arida e André Lara Resende (na chamada proposta "Larida"), a crônica elevação de preços no Brasil decorria fundamentalmente de um componente inercial: em uma economia amplamente indexada, os agentes reajustavam contratos de forma defasada para recompor picos de renda real passada, perpetuando a inflação passada no presente mesmo na ausência de novos choques de demanda.
+
+Diferentemente dos Planos Cruzado (1986), Bresser (1987) e Verão (1989) — que recorreram a congelamentos bruscos em datas arbitrárias, cristalizando severos desequilíbrios de preços relativos e gerando desabastecimento —, o Plano Real foi estruturado em três etapas sequenciais e transparentes. Na primeira fase, o Programa de Ação Imediata (PAI) e a criação do Fundo Social de Emergência (FSE) promoveram o ajuste fiscal prévio e a desvinculação orçamentária necessários para sinalizar solvência intertemporal e evitar a dominância fiscal.
+
+Na segunda etapa, instituída em março de 1994, criou-se a Unidade Real de Valor (URV), uma moeda-índice dotada de curso legal apenas como unidade de conta, cujo valor em cruzeiros reais era atualizado diariamente acompanhando a taxa de câmbio (cerca de US$ 1,00). Ao determinar a conversão compulsória dos salários pela média dos últimos quatro meses e incentivar a migração voluntária de preços e contratos privados para a URV, o governo promoveu uma hiperindexação coordenada. Como todos os preços passaram a variar simultaneamente na mesma unidade diária, eliminou-se a defasagem contratual que alimentava a memória inflacionária. Em 1º de julho de 1994, quando a URV foi convertida na nova moeda plena (o Real), os preços relativos já se encontravam devidamente alinhados, extinguindo a inércia sem necessidade de congelamento.
+
+Não obstante o êxito inicial, a sustentação da estabilidade entre 1994 e 1998 apoiou-se na combinação de abertura comercial com uma forte apreciação nominal e real da taxa de câmbio (a chamada âncora cambial, formalizada no regime de bandas cambiais após março de 1995). Se, por um lado, o barateamento dos bens comercializáveis (tradables) impôs disciplina competitiva à indústria doméstica e conteve a inflação, por outro provocou rápida inversão da balança comercial e crescentes déficits em Transações Correntes no Balanço de Pagamentos.
+
+À luz do modelo Mundell-Fleming sob câmbio administrado e elevada mobilidade de capitais, o financiamento desse hiato externo exigiu a manutenção de taxas de juros domésticas (TBC/Selic) em patamares extraordinariamente elevados para atrair capitais de curto prazo na Conta Financeira. Ademais, para evitar que o influxo de divisas expandisse endogenamente a Base Monetária (deslocando a curva LM para a direita e aquecendo a demanda), o Banco Central realizou massivas operações de esterilização mediante venda de títulos públicos. Essa engrenagem gerou grave efeito colateral quase-fiscal: o diferencial entre o custo da dívida mobiliária interna e o rendimento das reservas internacionais acelerou a trajetória da Dívida Líquida do Setor Público (DLSP).
+
+A vulnerabilidade externa desse arranjo tornou-se insustentável diante da sucessão de choques financeiros internacionais: a crise do México (efeito Tequila, 1994–1995), a crise dos tigres asiáticos (1997) e, decisivamente, a moratória da Rússia em agosto de 1998. A reversão abrupta da liquidez internacional desencadeou intensa fuga de capitais e perda de reservas cambiais, a despeito das elevações da taxa de juros e do acordo preventivo firmado com o Fundo Monetário Internacional (FMI).
+
+Em janeiro de 1999, esgotada a capacidade de defesa das bandas cambiais, o governo brasileiro abandonou a âncora cambial e adotou o regime de câmbio flutuante. Para substituir a antiga âncora nominal e ancorar as expectativas após a maxidesvalorização, institucionalizou-se o chamado Tripé Macroeconômico, articulando: (i) câmbio flutuante; (ii) regime formal de Metas para a Inflação operado com autonomia operacional pelo Banco Central; e (iii) metas de superávit primário respaldadas, no ano seguinte, pela Lei de Responsabilidade Fiscal.`;
+
+    // =========================================================================
+    // 4. ESTADO GLOBAL DO PROTÓTIPO
+    // =========================================================================
+    const appState = {
+      theme: 'light',
+      activeTab: 'tab-oficina',
+      essayStage: 'paper',
+      activeRankId: '3-sec',
+      graphScenario: 'flutuante_fiscal',
+      graphStep: 3,
+      tpsChoice: 'E',
+      tpsConfidence: 'certain',
+      timerRunning: true,
+      timerSeconds: 4460
+    };
+
+    // =========================================================================
+    // 5. ALTERNADOR DE TEMA (PERGAMINHO DIURNO VS. CHANCELARIA NOTURNA)
+    // =========================================================================
+    function setTheme(mode) {
+      appState.theme = mode;
+      const htmlEl = document.documentElement;
+      const btnLight = document.getElementById('btn-theme-light');
+      const btnDark = document.getElementById('btn-theme-dark');
+
+      if (mode === 'dark') {
+        htmlEl.classList.add('dark');
+        btnDark.className = 'px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all bg-[#C59B27] text-[#08111D] font-bold shadow-xs';
+        btnLight.className = 'px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all text-slate-300 hover:text-white';
+      } else {
+        htmlEl.classList.remove('dark');
+        btnLight.className = 'px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all bg-[#1E4471] text-[#FBF9F5] font-bold shadow-xs';
+        btnDark.className = 'px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all text-slate-600 hover:text-ink-900';
+      }
+      copyToast(mode === 'dark' ? 'Modo Chancelaria Noturna (#08111D) ativado' : 'Modo Pergaminho & Travertino (#FBF9F5) ativado');
+    }
+
+    // =========================================================================
+    // 6. NAVEGAÇÃO ENTRE AS 4 ABAS
+    // =========================================================================
+    function switchTab(tabId) {
+      appState.activeTab = tabId;
+      document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.add('hidden'));
+      document.getElementById(tabId).classList.remove('hidden');
+
+      document.querySelectorAll('.tab-nav-btn').forEach(btn => {
+        btn.className = 'tab-nav-btn px-4 py-2.5 text-xs sm:text-sm font-medium border-b-2 border-transparent opacity-70 hover:opacity-100 flex items-center gap-2 whitespace-nowrap transition';
+      });
+      const activeBtn = document.getElementById(`nav-${tabId}`);
+      if (activeBtn) {
+        activeBtn.className = 'tab-nav-btn px-4 py-2.5 text-xs sm:text-sm font-bold border-b-2 border-itamaraty-gold-600 dark:border-itamaraty-gold-400 text-itamaraty-navy-600 dark:text-itamaraty-gold-300 flex items-center gap-2 whitespace-nowrap transition';
+      }
+    }
+
+    // =========================================================================
+    // 7. ABA 1: FOLHA PAUTADA DE 90 LINHAS E CONTADORES
+    // =========================================================================
+    function initRuledPaperNumbers() {
+      const container = document.getElementById('ruled-line-numbers');
+      let html = '';
+      for (let i = 1; i <= 90; i++) {
+        const numStr = String(i).padStart(2, '0');
+        const isMilestone = i === 60 || i === 90;
+        html += `<div class="${isMilestone ? 'font-bold text-itamaraty-carmine-700 dark:text-itamaraty-gold-400' : ''}">${numStr}</div>`;
+      }
+      container.innerHTML = html;
+    }
+
+    function loadModelEssay() {
+      const textarea = document.getElementById('cacd-essay-textarea');
+      textarea.value = modelEssayText;
+      setEssayStage('paper');
+      updateEssayStats();
+      copyToast('Discursiva modelo carregada na folha pautada!');
+    }
+
+    function clearEssayPaper() {
+      const textarea = document.getElementById('cacd-essay-textarea');
+      textarea.value = '';
+      updateEssayStats();
+    }
+
+    function updateEssayStats() {
+      const text = document.getElementById('cacd-essay-textarea').value;
+      const chars = text.length;
+      const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+
+      // Calcula linhas reais considerando quebras de parágrafo e ~65 caracteres por linha pautada
+      const paragraphs = text.split('\n');
+      let totalLines = 0;
+      if (text.trim().length > 0) {
+        paragraphs.forEach(p => {
+          totalLines += Math.max(1, Math.ceil(p.length / 66));
+        });
+      }
+
+      document.getElementById('word-char-counter').textContent = `${words} palavras • ${chars} caracteres`;
+      document.getElementById('line-count-number').textContent = totalLines;
+
+      const pct = Math.min(100, Math.round((totalLines / 90) * 100));
+      const bar = document.getElementById('line-progress-bar');
+      const badge = document.getElementById('line-zone-badge');
+      bar.style.width = `${pct}%`;
+
+      if (totalLines < 60) {
+        bar.className = 'h-full bg-amber-500 transition-all';
+        badge.className = 'px-2 py-0.5 rounded text-[10px] bg-amber-500/20 text-amber-700 dark:text-amber-300 font-bold';
+        badge.textContent = `ABAIXO DO MÍNIMO (FALTAM ${60 - totalLines} LINHAS)`;
+      } else if (totalLines <= 90) {
+        bar.className = 'h-full bg-itamaraty-emerald-500 transition-all';
+        badge.className = 'px-2 py-0.5 rounded text-[10px] bg-itamaraty-emerald-700 text-white font-bold';
+        badge.textContent = 'ZONA IDEAL RIO BRANCO (60–90 LINHAS)';
+      } else {
+        bar.className = 'h-full bg-itamaraty-carmine-500 transition-all';
+        badge.className = 'px-2 py-0.5 rounded text-[10px] bg-itamaraty-carmine-700 text-white font-bold';
+        badge.textContent = `LIMITE EXCEDIDO (+${totalLines - 90} LINHAS)`;
+      }
+    }
+
+    function setEssayStage(stage) {
+      appState.essayStage = stage;
+      const skelView = document.getElementById('stage-skeleton-view');
+      const paperView = document.getElementById('stage-paper-view');
+      const btnSkel = document.getElementById('btn-stage-skeleton');
+      const btnPaper = document.getElementById('btn-stage-paper');
+
+      if (stage === 'skeleton') {
+        skelView.classList.remove('hidden');
+        paperView.classList.add('hidden');
+        btnSkel.className = 'px-3 py-1.5 rounded-lg transition theme-btn-primary shadow-xs';
+        btnPaper.className = 'px-3 py-1.5 rounded-lg transition opacity-75 hover:opacity-100';
+      } else {
+        skelView.classList.add('hidden');
+        paperView.classList.remove('hidden');
+        btnPaper.className = 'px-3 py-1.5 rounded-lg transition theme-btn-primary shadow-xs';
+        btnSkel.className = 'px-3 py-1.5 rounded-lg transition opacity-75 hover:opacity-100';
+      }
+    }
+
+    // =========================================================================
+    // 8. ABA 2: RENDERIZAÇÃO DAS 5 INSÍGNIAS E DOS 5 MÓDULOS DE ECONOMIA
+    // =========================================================================
+    function buildRankSvg(stars, size = 56) {
+      const starPositions = {
+        1: [[28, 28]],
+        2: [[21, 28], [35, 28]],
+        3: [[28, 20], [20, 33], [36, 33]],
+        4: [[21, 21], [35, 21], [21, 35], [35, 35]],
+        5: [[28, 18], [18, 25], [38, 25], [21, 36], [35, 36]]
+      }[stars] || [[28, 28]];
+
+      const starsHtml = starPositions.map(([cx, cy]) => `
+        <circle cx="${cx}" cy="${cy}" r="3.4" fill="#E5C76B" stroke="#8A6409" stroke-width="0.6" />
+      `).join('');
+
+      return `
+        <svg viewBox="0 0 56 56" width="${size}" height="${size}">
+          <!-- Ramos de Café e Louro em Ouro Escovado -->
+          <circle cx="28" cy="28" r="25" fill="#08111D" stroke="#C59B27" stroke-width="1.5" />
+          <circle cx="28" cy="28" r="21" fill="none" stroke="#E5C76B" stroke-width="1.2" stroke-dasharray="${stars === 5 ? 'none' : '4 2'}" />
+          <!-- Centro em Esmalte Azul-Ultramar da Ordem de Rio Branco -->
+          <circle cx="28" cy="28" r="16" fill="#1E4471" stroke="#C59B27" stroke-width="1.5" />
+          ${starsHtml}
+        </svg>
+      `;
+    }
+
+    function renderRanksAndModules() {
+      const grid = document.getElementById('ranks-grid');
+      grid.innerHTML = careerRanks.map(r => {
+        const isSelected = r.id === appState.activeRankId;
+        return `
+          <div onclick="selectCareerRank('${r.id}')" class="cursor-pointer rounded-2xl border p-4 flex flex-col justify-between transition ${
+            isSelected
+              ? 'theme-elevated border-2 border-itamaraty-gold-500 shadow-lg'
+              : 'theme-card hover:border-itamaraty-gold-500/50 opacity-85 hover:opacity-100'
+          }">
+            <div class="flex flex-col items-center text-center space-y-2.5">
+              <div class="p-1.5 rounded-2xl bg-[#08111D] border border-itamaraty-gold-500/40 shadow-md">
+                ${buildRankSvg(r.stars, 54)}
+              </div>
+              <div>
+                <span class="font-mono text-[10px] uppercase tracking-wider text-itamaraty-gold-600 dark:text-itamaraty-gold-400 font-bold">
+                  ${'★'.repeat(r.stars)} • ${r.statusEnum}
+                </span>
+                <h4 class="font-serif font-bold text-base mt-0.5">${r.title}</h4>
+              </div>
+              <p class="text-xs opacity-80 leading-relaxed">${r.description}</p>
+            </div>
+            <div class="mt-4 pt-2.5 border-t border-[#E5DEC9] dark:border-[#18304E] font-mono text-[10px] text-itamaraty-emerald-700 dark:text-emerald-300">
+              <strong>Requisito:</strong> ${r.condition}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Atualiza o ícone no Header
+      const currentRank = careerRanks.find(x => x.id === appState.activeRankId) || careerRanks[0];
+      document.getElementById('header-rank-icon').innerHTML = buildRankSvg(currentRank.stars, 26);
+      document.getElementById('header-rank-title').textContent = `${currentRank.title} ${'★'.repeat(currentRank.stars)}`;
+      document.getElementById('selected-rank-pill').textContent = `Patente no Header: ${currentRank.title}`;
+
+      // Renderiza os 5 Módulos de Economia com Capas SVG
+      const modGrid = document.getElementById('modules-cards-grid');
+      modGrid.innerHTML = econModules.map(m => `
+        <div class="theme-card rounded-2xl border overflow-hidden flex flex-col justify-between shadow-xs hover:shadow-md transition">
+          <div class="p-3 bg-[#08111D]">
+            ${m.svgArt}
+          </div>
+          <div class="p-5 flex-1 flex flex-col justify-between space-y-4">
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between font-mono text-[11px]">
+                <span class="font-bold text-itamaraty-gold-600 dark:text-itamaraty-gold-400">${m.code}</span>
+                <span class="px-2 py-0.5 rounded bg-itamaraty-emerald-700/15 text-itamaraty-emerald-700 dark:text-emerald-300 font-semibold">${m.fsrsStability}</span>
+              </div>
+              <h4 class="font-serif text-lg font-bold">${m.title}</h4>
+              <p class="text-xs opacity-80 leading-relaxed">${m.subtitle}</p>
+            </div>
+            <div class="space-y-1.5 pt-2 border-t border-[#E5DEC9] dark:border-[#18304E]">
+              <div class="flex items-center justify-between font-mono text-[11px]">
+                <span>${m.badge}</span>
+                <span class="font-bold">${m.progress}%</span>
+              </div>
+              <div class="w-full h-2 rounded-full bg-slate-300 dark:bg-slate-800 overflow-hidden">
+                <div class="h-full bg-itamaraty-emerald-500" style="width: ${m.progress}%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function selectCareerRank(rankId) {
+      appState.activeRankId = rankId;
+      renderRanksAndModules();
+      const r = careerRanks.find(x => x.id === rankId);
+      copyToast(`Insígnia "${r.title}" aplicada ao Header!`);
+    }
+
+    // =========================================================================
+    // 9. ABA 3: TRADUTOR DE GRÁFICOS COM CORES PADRONIZADAS
+    // =========================================================================
+    const graphScenarios = {
+      flutuante_fiscal: {
+        verdict: 'Ineficaz (Crowding-Out Cambial Completo)',
+        bpImpact: 'BPM6: ↑CF compensado por ↓TC (ΔR = 0)',
+        isShift1: 65, isShift2: 0, lmShift1: 0, lmShift2: 0,
+        e1: { x: 288, y: 128 }, e2: { x: 255, y: 160 },
+        steps: [
+          { title: 'PASSO 0: EQUILÍBRIO INICIAL (E₀)', desc: 'As curvas IS (Ouro #F59E0B), LM (Azul #38BDF8) e BP (Esmeralda #10B981) cruzam-se em E₀ com juros domésticos iguais aos internacionais (i = i*).' },
+          { title: 'PASSO 1: CHOQUE FISCAL EXPANSIVO (IS₁ EM CORAL #F97316)', desc: 'O aumento dos gastos públicos (↑G) desloca a curva IS para a direita (Coral #F97316), elevando temporariamente a renda e pressionando os juros domésticos acima de i* (ponto E₁).' },
+          { title: 'PASSO 2: ENTRADA DE CAPITAIS E APRECIAÇÃO DO REAL', desc: 'O diferencial de juros (i₁ > i*) atrai forte influxo de dólares na Conta Financeira. Como o câmbio é flutuante, o Banco Central não intervém e o Real sofre apreciação.' },
+          { title: 'PASSO 3: RETRAÇÃO DAS EXPORTAÇÕES LÍQUIDAS (RETORNO A E₀)', desc: 'A valorização cambial reduz as exportações líquidas (↓NX = -ΔG), deslocando a curva IS de volta à posição original. O produto retorna a Y₀ (crowding-out externo total).' }
+        ]
+      },
+      flutuante_monetaria: {
+        verdict: 'Altamente Eficaz (Reforçada pelo Canal Cambial)',
+        bpImpact: 'BPM6: Saída na CF deprecia o câmbio e gera ↑NX (ΔR = 0)',
+        isShift1: 0, isShift2: 65, lmShift1: 65, lmShift2: 65,
+        e1: { x: 288, y: 192 }, e2: { x: 320, y: 160 },
+        steps: [
+          { title: 'PASSO 0: EQUILÍBRIO INICIAL (E₀)', desc: 'Economia parte em equilíbrio interno e externo no ponto E₀.' },
+          { title: 'PASSO 1: EXPANSÃO MONETÁRIA (LM₁ DESLOCA PARA A DIREITA)', desc: 'O Banco Central expande a oferta de moeda, deslocando a curva LM para a direita e reduzindo a taxa de juros doméstica abaixo de i* (ponto E₁ abaixo da curva BP).' },
+          { title: 'PASSO 2: SAÍDA DE CAPITAIS E DEPRECIAÇÃO CAMBIAL', desc: 'Com juros domésticos menores (i₁ < i*), ocorre saída líquida de capitais na Conta Financeira, depreciando (desvalorizando) a taxa de câmbio real.' },
+          { title: 'PASSO 3: SALTO NAS EXPORTAÇÕES LÍQUIDAS (IS DESLOCA ATÉ E₂)', desc: 'A depreciação cambial estimula as exportações líquidas (↑NX), deslocando a curva IS para a direita até restabelecer o equilíbrio externo em E₂ com forte expansão da renda!' }
+        ]
+      },
+      fixo_fiscal: {
+        verdict: 'Eficácia Máxima (Expansão Monetária Endógena)',
+        bpImpact: 'BPM6: Superávit gera Acumulação de Reservas (ΔR > 0)',
+        isShift1: 65, isShift2: 65, lmShift1: 0, lmShift2: 65,
+        e1: { x: 288, y: 128 }, e2: { x: 320, y: 160 },
+        steps: [
+          { title: 'PASSO 0: EQUILÍBRIO INICIAL SOB CÂMBIO FIXO (E₀)', desc: 'O Banco Central compromete-se a manter a paridade cambial fixa.' },
+          { title: 'PASSO 1: CHOQUE FISCAL EXPANSIVO (IS₁ EM CORAL #F97316)', desc: 'O aumento de gastos públicos desloca a IS para a direita (E₁), elevando a taxa de juros doméstica acima da paridade internacional (i₁ > i*).' },
+          { title: 'PASSO 2: INTERVENÇÃO DO BACEN E COMPRA DE RESERVAS', desc: 'Para impedir a apreciação cambial, o Banco Central compra o excesso de dólares acumulando Ativos de Reserva (ΔR > 0) e emitindo moeda doméstica.' },
+          { title: 'PASSO 3: DESLOCAMENTO ENDÓGENO DA LM ATÉ E₂', desc: 'A expansão da Base Monetária desloca a curva LM para a direita até E₂, eliminando a alta dos juros e maximizando o crescimento da renda.' }
+        ]
+      },
+      fixo_monetaria: {
+        verdict: 'Totalmente Ineficaz (Perda de Autonomia Monetária)',
+        bpImpact: 'BPM6: Fuga de Capitais drena Reservas (ΔR < 0)',
+        isShift1: 0, isShift2: 0, lmShift1: 65, lmShift2: 0,
+        e1: { x: 288, y: 192 }, e2: { x: 255, y: 160 },
+        steps: [
+          { title: 'PASSO 0: EQUILÍBRIO INICIAL SOB CÂMBIO FIXO (E₀)', desc: 'Economia parte em E₀ sob regime de câmbio fixo.' },
+          { title: 'PASSO 1: EXPANSÃO MONETÁRIA AUTÔNOMA (LM₁)', desc: 'O BACEN expande o crédito doméstico, deslocando a LM para a direita e derrubando os juros em E₁ (i₁ < i*).' },
+          { title: 'PASSO 2: FUGA DE CAPITAIS E VENDA DE RESERVAS', desc: 'Para impedir a desvalorização da moeda, o BACEN é obrigado a vender reservas internacionais e recolher moeda nacional.' },
+          { title: 'PASSO 3: CONTRAÇÃO DA LM DE VOLTA A E₀', desc: 'A perda de reservas contrai a Base Monetária até que a curva LM retorne integralmente à posição inicial (E₀), demonstrando o Trilema de Mundell.' }
+        ]
+      }
+    };
+
+    function renderStandardizedGraph() {
+      const scn = graphScenarios[appState.graphScenario];
+      const step = appState.graphStep;
+      const layer = document.getElementById('standardized-svg-layer');
+
+      // Coordenadas base centradas em E0 = (255, 160)
+      let html = '';
+
+      // 1. Curva BP (#10B981 - Esmeralda Itamaraty)
+      html += `
+        <line x1="85" y1="160" x2="435" y2="160" stroke="#10B981" stroke-width="3" />
+        <text x="438" y="155" font-family="JetBrains Mono" font-size="11" font-weight="700" fill="#10B981">BP (i = i*)</text>
+      `;
+
+      // 2. Curva IS₀ (#F59E0B - Ouro Imperial)
+      html += `
+        <line x1="145" y1="50" x2="365" y2="270" stroke="#F59E0B" stroke-width="3" opacity="${step > 0 && scn.isShift1 !== 0 ? '0.45' : '1'}" />
+        <text x="370" y="272" font-family="JetBrains Mono" font-size="11" font-weight="700" fill="#F59E0B">IS₀</text>
+      `;
+
+      // 3. Curva LM₀ (#38BDF8 - Azul Celeste Rio Branco)
+      html += `
+        <line x1="145" y1="270" x2="365" y2="50" stroke="#38BDF8" stroke-width="3" opacity="${step > 0 && scn.lmShift1 !== 0 ? '0.45' : '1'}" />
+        <text x="370" y="55" font-family="JetBrains Mono" font-size="11" font-weight="700" fill="#38BDF8">LM₀</text>
+      `;
+
+      // 4. Deslocamento de Choque no Passo >= 1 (#F97316 - Coral)
+      if (step >= 1) {
+        if (scn.isShift1 !== 0) {
+          html += `
+            <line x1="${145 + scn.isShift1}" y1="50" x2="${365 + scn.isShift1}" y2="270" stroke="#F97316" stroke-width="3" stroke-dasharray="${step === 3 && scn.isShift2 === 0 ? '5 4' : 'none'}" />
+            <text x="${370 + scn.isShift1}" y="272" font-family="JetBrains Mono" font-size="11" font-weight="700" fill="#F97316">IS₁ (Choque)</text>
+          `;
+        }
+        if (scn.lmShift1 !== 0) {
+          html += `
+            <line x1="${145 + scn.lmShift1}" y1="270" x2="${365 + scn.lmShift1}" y2="50" stroke="#F97316" stroke-width="3" stroke-dasharray="${step === 3 && scn.lmShift2 === 0 ? '5 4' : 'none'}" />
+            <text x="${370 + scn.lmShift1}" y="55" font-family="JetBrains Mono" font-size="11" font-weight="700" fill="#F97316">LM₁ (Choque)</text>
+          `;
+        }
+      }
+
+      // 5. Deslocamento Secundário no Passo 3
+      if (step === 3) {
+        if (scn.isShift2 !== 0 && scn.isShift2 !== scn.isShift1) {
+          html += `
+            <line x1="${145 + scn.isShift2}" y1="50" x2="${365 + scn.isShift2}" y2="270" stroke="#F59E0B" stroke-width="3.5" />
+            <text x="${370 + scn.isShift2}" y="255" font-family="JetBrains Mono" font-size="11" font-weight="700" fill="#F59E0B">IS₂ (Final)</text>
+          `;
+        }
+        if (scn.lmShift2 !== 0 && scn.lmShift2 !== scn.lmShift1) {
+          html += `
+            <line x1="${145 + scn.lmShift2}" y1="270" x2="${365 + scn.lmShift2}" y2="50" stroke="#38BDF8" stroke-width="3.5" />
+            <text x="${370 + scn.lmShift2}" y="72" font-family="JetBrains Mono" font-size="11" font-weight="700" fill="#38BDF8">LM₂ (Final)</text>
+          `;
+        }
+      }
+
+      // Pontos E0, E1 e E2
+      html += `
+        <circle cx="255" cy="160" r="5.5" fill="#F3EFE6" stroke="#08111D" stroke-width="2" />
+        <text x="242" y="148" font-family="JetBrains Mono" font-size="11" font-weight="700" fill="#F3EFE6">E₀</text>
+      `;
+
+      if (step >= 1) {
+        html += `
+          <circle cx="${scn.e1.x}" cy="${scn.e1.y}" r="5.5" fill="#F97316" stroke="#08111D" stroke-width="2" />
+          <text x="${scn.e1.x + 8}" y="${scn.e1.y - 6}" font-family="JetBrains Mono" font-size="11" font-weight="700" fill="#F97316">E₁</text>
+        `;
+      }
+
+      if (step === 3) {
+        html += `
+          <circle cx="${scn.e2.x}" cy="${scn.e2.y}" r="7" fill="#10B981" stroke="#F3EFE6" stroke-width="2" />
+          <text x="${scn.e2.x + 10}" y="${scn.e2.y + 4}" font-family="JetBrains Mono" font-size="11" font-weight="700" fill="#10B981">E₂ (Final)</text>
+        `;
+      }
+
+      layer.innerHTML = html;
+
+      // Atualiza botões de passo e textos
+      for (let i = 0; i <= 3; i++) {
+        const b = document.getElementById(`gstep-${i}`);
+        b.className = i === step
+          ? 'px-3 py-1.5 rounded-lg font-mono text-xs font-bold bg-[#C59B27] text-[#08111D]'
+          : 'px-3 py-1.5 rounded-lg font-mono text-xs font-medium bg-[#0F1E32] text-[#F3EFE6] hover:bg-[#18304E]';
+      }
+
+      document.getElementById('graph-verdict-pill').textContent = scn.verdict;
+      document.getElementById('graph-bp-impact').textContent = scn.bpImpact;
+      document.getElementById('graph-step-title').textContent = scn.steps[step].title;
+      document.getElementById('graph-step-desc').textContent = scn.steps[step].desc;
+    }
+
+    function selectGraphScenario(scnKey) {
+      appState.graphScenario = scnKey;
+      appState.graphStep = 3;
+      document.querySelectorAll('.scn-btn').forEach(b => {
+        b.className = 'scn-btn p-3 rounded-xl border border-[#E5DEC9] dark:border-[#18304E] text-left text-xs transition hover:opacity-90';
+      });
+      document.getElementById(`scn-${scnKey}`).className = 'scn-btn p-3 rounded-xl border text-left text-xs transition theme-btn-primary font-bold';
+      renderStandardizedGraph();
+    }
+
+    function setGraphStep(s) {
+      appState.graphStep = s;
+      renderStandardizedGraph();
+    }
+
+    function selectTpsChoice(c) {
+      appState.tpsChoice = c;
+      ['C', 'E', 'B'].forEach(k => {
+        const btn = document.getElementById(`tps-btn-${k}`);
+        btn.className = k === c
+          ? 'py-2.5 px-3 rounded-xl border-2 border-itamaraty-gold-500 font-bold text-xs theme-btn-primary'
+          : 'py-2.5 px-3 rounded-xl border border-[#E5DEC9] dark:border-[#18304E] font-bold text-xs transition';
+      });
+    }
+
+    function selectConfidence(level) {
+      appState.tpsConfidence = level;
+      ['certain', 'doubt', 'guess'].forEach(k => {
+        const btn = document.getElementById(`conf-${k}`);
+        btn.className = k === level
+          ? 'py-2 px-2.5 rounded-lg border text-xs font-semibold theme-btn-primary'
+          : 'py-2 px-2.5 rounded-lg border border-[#E5DEC9] dark:border-[#18304E] text-xs font-medium';
+      });
+    }
+
+    // =========================================================================
+    // 10. ABA 4: MOSTRUÁRIO DE CORES INTERATIVO (STYLE GUIDE)
+    // =========================================================================
+    const colorGroups = [
+      {
+        group: '1. Azul Barão (Ordem de Rio Branco — Autoridade e Modo Noturno)',
+        swatches: [
+          { name: 'itamaraty-navy-950', hex: '#08111D', role: 'Fundo Principal Noturno' },
+          { name: 'itamaraty-navy-900', hex: '#0F1E32', role: 'Superfície de Cards Noturno' },
+          { name: 'itamaraty-navy-800', hex: '#18304E', role: 'Bordas e Divisores Noturno' },
+          { name: 'itamaraty-navy-600', hex: '#1E4471', role: 'Botão Primário Diurno' }
+        ]
+      },
+      {
+        group: '2. Pergaminho & Mármore Travertino (Conforto Visual Diurno)',
+        swatches: [
+          { name: 'travertine-50', hex: '#FBF9F5', role: 'Fundo Principal Diurno' },
+          { name: 'travertine-100', hex: '#F3EFE6', role: 'Superfície de Cards Diurno' },
+          { name: 'travertine-200', hex: '#E5DEC9', role: 'Pautas e Bordas Sutis' },
+          { name: 'ink-900', hex: '#121C26', role: 'Texto Principal Editorial' }
+        ]
+      },
+      {
+        group: '3. Ouro Chancelaria, Verde Burle Marx e Carmim Diplomático',
+        swatches: [
+          { name: 'itamaraty-gold-500', hex: '#C59B27', role: 'Botão Noturno & Insígnias' },
+          { name: 'itamaraty-emerald-700', hex: '#0D5C46', role: 'Estabilidade FSRS & Acerto' },
+          { name: 'itamaraty-carmine-700', hex: '#9E2A2B', role: 'Pegadinha TPS & Margem' },
+          { name: 'econ-lm-sky', hex: '#38BDF8', role: 'Curva LM Padronizada' }
+        ]
+      }
+    ];
+
+    function renderStyleGuideSwatches() {
+      const container = document.getElementById('color-swatches-container');
+      container.innerHTML = colorGroups.map(g => `
+        <div class="space-y-3">
+          <h4 class="font-mono text-xs font-bold uppercase opacity-80">${g.group}</h4>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+            ${g.swatches.map(s => `
+              <div onclick="copyToast('Token copiado: ${s.name} (${s.hex})')" class="cursor-pointer theme-elevated rounded-xl border p-3 flex items-center gap-3 hover:border-itamaraty-gold-500 transition">
+                <div class="w-12 h-12 rounded-lg border border-black/15 shrink-0 shadow-inner" style="background-color: ${s.hex}"></div>
+                <div class="min-w-0">
+                  <div class="font-mono text-xs font-bold truncate">${s.name}</div>
+                  <div class="font-mono text-[11px] text-itamaraty-gold-600 dark:text-itamaraty-gold-400">${s.hex}</div>
+                  <div class="text-[11px] opacity-75 truncate">${s.role}</div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // =========================================================================
+    // 11. UTILITÁRIOS GERAIS (CRONÔMETRO E TOAST)
+    // =========================================================================
+    function toggleTimer() {
+      appState.timerRunning = !appState.timerRunning;
+      document.getElementById('timer-btn-text').textContent = appState.timerRunning ? 'Pausar' : 'Retomar';
+    }
+
+    function copyToast(message) {
+      const temp = document.createElement('textarea');
+      temp.value = message;
+      document.body.appendChild(temp);
+      temp.select();
+      document.execCommand('copy');
+      document.body.removeChild(temp);
+
+      const box = document.getElementById('toast-box');
+      document.getElementById('toast-text').textContent = message;
+      box.classList.remove('hidden');
+      box.classList.add('flex');
+      setTimeout(() => {
+        box.classList.add('hidden');
+        box.classList.remove('flex');
+      }, 2800);
+    }
+
+    // Inicialização Completa ao Carregar a Página
+    window.onload = function () {
+      initRuledPaperNumbers();
+      loadModelEssay();
+      renderRanksAndModules();
+      renderStandardizedGraph();
+      renderStyleGuideSwatches();
+      selectTpsChoice('E');
+      if (window.lucide) {
+        lucide.createIcons();
+      }
+      setInterval(() => {
+        if (!appState.timerRunning) return;
+        appState.timerSeconds++;
+        const h = String(Math.floor(appState.timerSeconds / 3600)).padStart(2, '0');
+        const m = String(Math.floor((appState.timerSeconds % 3600) / 60)).padStart(2, '0');
+        const s = String(appState.timerSeconds % 60).padStart(2, '0');
+        const el = document.getElementById('essay-timer');
+        if (el) el.textContent = `${h}:${m}:${s}`;
+      }, 1000);
+    };
+  </script>
+</body>
+</html>
