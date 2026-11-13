@@ -39,13 +39,26 @@ function requireEnv(name: string): string {
   return value;
 }
 
-/** Permite que páginas renderizem um estado de "não configurado" em vez de quebrar. */
+/** Trechos dos valores de exemplo do .env.example, que não são chaves de verdade. */
+const PLACEHOLDER_MARKERS = ["seu-projeto", "sua-chave"];
+
+function hasRealValue(name: string): boolean {
+  const value = process.env[name]?.trim();
+  if (!value) return false;
+  return !PLACEHOLDER_MARKERS.some((marker) => value.includes(marker));
+}
+
+/**
+ * Permite que páginas renderizem um estado de "não configurado" em vez de
+ * quebrar. Valores copiados do .env.example contam como não configurados:
+ * tentar conectar com eles só produziria um erro de chave inválida.
+ */
 export function isSupabaseConfigured(): boolean {
-  return Boolean(process.env[SUPABASE_URL_ENV] && process.env[SUPABASE_KEY_ENV]);
+  return hasRealValue(SUPABASE_URL_ENV) && hasRealValue(SUPABASE_KEY_ENV);
 }
 
 export function isGeminiConfigured(): boolean {
-  return Boolean(process.env[GEMINI_KEY_ENV]);
+  return hasRealValue(GEMINI_KEY_ENV);
 }
 
 let cachedSupabaseAdmin: SupabaseClient | null = null;

@@ -1,29 +1,171 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
 /*
- * Plataforma de estudo de alta performance: fundo sóbrio, texto de alto contraste
- * e âmbar como única cor de destaque (progresso, foco, ação).
+ * Design System "Itamaraty / Rio Branco" — tokens para o Tailwind 4.
+ *
+ * Tradução do tailwind.config.ts do Artefato 15, que estava no formato do
+ * Tailwind 3: no 4 a configuração vive em CSS, as diretivas @tailwind não
+ * existem mais e o modo escuro por classe precisa de @custom-variant.
+ * Documentação dos tokens: docs/03-design-system-and-assets.md.
  */
-:root {
-  color-scheme: dark;
+
+/* Modo Chancelaria (noturno): classe .dark no <html>, aplicada antes da
+   primeira pintura pelo script inline do layout, sem piscar em claro. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Fontes vêm das variáveis CSS que o next/font injeta no <html>. */
+@theme inline {
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-newsreader), Georgia, "Times New Roman", serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, "SFMono-Regular", monospace;
 }
 
-html,
-body {
-  background-color: #020617; /* slate-950 */
-  color: #f1f5f9; /* slate-100 */
+@theme {
+  /* Azul Barão — Ordem de Rio Branco (autoridade, ação primária no modo diurno) */
+  --color-itamaraty-navy-950: #08111d;
+  --color-itamaraty-navy-900: #0f1e32;
+  --color-itamaraty-navy-800: #18304e;
+  --color-itamaraty-navy-700: #1b3b61;
+  --color-itamaraty-navy-600: #1e4471;
+  --color-itamaraty-navy-500: #2b5b94;
+
+  /* Esmeralda — Jardins de Burle Marx (acerto, estabilidade, superávit).
+     O 600 não existia no config original, mas era usado pelos componentes:
+     sem ele, as barras de progresso sumiam no modo diurno. */
+  --color-itamaraty-emerald-950: #04221a;
+  --color-itamaraty-emerald-900: #07362a;
+  --color-itamaraty-emerald-700: #0d5c46;
+  --color-itamaraty-emerald-600: #0f7156;
+  --color-itamaraty-emerald-500: #108565;
+  --color-itamaraty-emerald-400: #24a17e;
+
+  /* Ouro Chancelaria (maestria, citações clássicas, ação primária no modo noturno) */
+  --color-itamaraty-gold-700: #8a6409;
+  --color-itamaraty-gold-600: #b8860b;
+  --color-itamaraty-gold-500: #c59b27;
+  --color-itamaraty-gold-400: #d4af37;
+  --color-itamaraty-gold-300: #e5c76b;
+
+  /* Carmim Diplomático (erro, armadilha, déficit) */
+  --color-itamaraty-carmine-900: #4a1213;
+  --color-itamaraty-carmine-700: #9e2a2b;
+  --color-itamaraty-carmine-500: #c83e3b;
+
+  /* Pergaminho & Travertino — superfícies do modo diurno */
+  --color-travertine-50: #fbf9f5;
+  --color-travertine-100: #f3efe6;
+  --color-travertine-200: #e5dec9;
+  --color-travertine-300: #d2c7a8;
+
+  /* Tinta — texto do modo diurno */
+  --color-ink-900: #121c26;
+  --color-ink-700: #2d3748;
+  --color-ink-600: #4a5568;
+  --color-ink-500: #64748b;
+
+  /* Termômetro de confiança: marcação de "Dúvida / Chute" no TPS */
+  --color-amber-trap-500: #d97706;
+
+  /* Cores semânticas invariáveis dos gráficos econômicos */
+  --color-econ-is: #f59e0b;
+  --color-econ-lm: #38bdf8;
+  --color-econ-bp: #10b981;
+  --color-econ-shock: #f97316;
+  --color-econ-deadweight: #f43f5e;
+
+  --shadow-diplomatic: 0 10px 30px -10px rgb(8 17 29 / 0.45);
+  --shadow-parchment: 0 4px 20px -2px rgb(18 28 38 / 0.08);
 }
 
-body {
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  font-family:
-    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
-    Arial, sans-serif;
+@utility bg-chancery-gradient {
+  background-image: linear-gradient(135deg, #08111d 0%, #0f1e32 60%, #18304e 100%);
 }
 
-/* Leitura longa de fichas e redações pede medida de linha confortável. */
-.prose-estudo {
-  max-width: 68ch;
-  line-height: 1.75;
+@utility bg-gold-shimmer {
+  background-image: linear-gradient(90deg, #b8860b 0%, #e5c76b 50%, #c59b27 100%);
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
+  body {
+    background-color: var(--color-travertine-50);
+    color: var(--color-ink-900);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  html.dark body {
+    background-color: var(--color-itamaraty-navy-950);
+    color: var(--color-travertine-100);
+  }
+}
+
+/*
+ * Fichas de estudo: tipografia editorial (plugin typography) com as cores do
+ * Design System. Fica fora de @layer de propósito — estilo sem camada vence
+ * os estilos em camada do plugin, então a precedência não depende da ordem
+ * em que o Tailwind emite as classes.
+ */
+.prose-itamaraty {
+  --tw-prose-body: var(--color-ink-900);
+  --tw-prose-headings: var(--color-ink-900);
+  --tw-prose-lead: var(--color-ink-700);
+  --tw-prose-links: var(--color-itamaraty-navy-600);
+  --tw-prose-bold: var(--color-ink-900);
+  --tw-prose-counters: var(--color-itamaraty-gold-600);
+  --tw-prose-bullets: var(--color-itamaraty-gold-600);
+  --tw-prose-hr: var(--color-travertine-200);
+  --tw-prose-quotes: var(--color-ink-700);
+  --tw-prose-quote-borders: var(--color-itamaraty-gold-500);
+  --tw-prose-captions: var(--color-ink-500);
+  --tw-prose-code: var(--color-itamaraty-navy-700);
+  --tw-prose-pre-code: var(--color-travertine-100);
+  --tw-prose-pre-bg: var(--color-itamaraty-navy-900);
+  --tw-prose-th-borders: var(--color-travertine-300);
+  --tw-prose-td-borders: var(--color-travertine-200);
+}
+
+.dark .prose-itamaraty {
+  --tw-prose-body: var(--color-travertine-100);
+  --tw-prose-headings: var(--color-travertine-50);
+  --tw-prose-lead: var(--color-travertine-200);
+  --tw-prose-links: var(--color-itamaraty-gold-400);
+  --tw-prose-bold: var(--color-travertine-50);
+  --tw-prose-counters: var(--color-itamaraty-gold-400);
+  --tw-prose-bullets: var(--color-itamaraty-gold-400);
+  --tw-prose-hr: var(--color-itamaraty-navy-800);
+  --tw-prose-quotes: var(--color-travertine-200);
+  --tw-prose-quote-borders: var(--color-itamaraty-gold-500);
+  --tw-prose-captions: var(--color-travertine-300);
+  --tw-prose-code: var(--color-itamaraty-gold-300);
+  --tw-prose-pre-code: var(--color-travertine-100);
+  --tw-prose-pre-bg: var(--color-itamaraty-navy-950);
+  --tw-prose-th-borders: var(--color-itamaraty-navy-700);
+  --tw-prose-td-borders: var(--color-itamaraty-navy-800);
+}
+
+/* Folha pautada oficial da 3ª Fase: pautas de 32 px e margem em carmim. */
+.cacd-ruled-paper {
+  background-color: var(--color-travertine-50);
+  color: var(--color-ink-900);
+  background-image: linear-gradient(transparent 31px, var(--color-travertine-200) 32px);
+  background-size: 100% 32px;
+  line-height: 32px;
+  padding-top: 6px;
+  border-left: 2px solid rgb(158 42 43 / 0.35);
+}
+
+.dark .cacd-ruled-paper {
+  background-color: #0b1626;
+  color: var(--color-travertine-100);
+  background-image: linear-gradient(transparent 31px, rgb(24 48 78 / 0.75) 32px);
+  border-left: 2px solid rgb(197 155 39 / 0.4);
 }
