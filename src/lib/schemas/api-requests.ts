@@ -27,3 +27,10 @@ export const SaveTutorFlashcardSchema = z.object({
 });
 
 export type SaveTutorFlashcardInput = z.infer<typeof SaveTutorFlashcardSchema>;
+
+/** Organização do acervo: ligar (ou desligar, com null) uma seção a um tópico da trilha. */
+export const AssignSectionTopicSchema = z.object({
+  sectionId: z.uuid(),
+  topicId: z.uuid().nullable(),
+});
+export type AssignSectionTopicInput = z.infer<typeof AssignSectionTopicSchema>;

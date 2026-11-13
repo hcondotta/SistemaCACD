@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { AdvanceTopicProgressSchema, SaveTutorFlashcardSchema } from "./api-requests";
+import { AdvanceTopicProgressSchema, AssignSectionTopicSchema, SaveTutorFlashcardSchema } from "./api-requests";
 
 const TOPIC_ID = "9b2f6c1e-4d3a-4f8b-9c2d-1a2b3c4d5e6f";
 
@@ -46,5 +46,21 @@ describe("SaveTutorFlashcardSchema", () => {
       backAnswer: "Resposta",
     });
     expect(parsed.success).toBe(false);
+  });
+});
+
+describe("AssignSectionTopicSchema", () => {
+  const SECTION_ID = "3f1e2d4c-5b6a-4789-8a1b-2c3d4e5f6a7b";
+
+  it("liga uma seção a um tópico", () => {
+    expect(AssignSectionTopicSchema.safeParse({ sectionId: SECTION_ID, topicId: TOPIC_ID }).success).toBe(true);
+  });
+
+  it("aceita tópico nulo para desfazer o vínculo", () => {
+    expect(AssignSectionTopicSchema.parse({ sectionId: SECTION_ID, topicId: null }).topicId).toBeNull();
+  });
+
+  it("recusa id que não é UUID", () => {
+    expect(AssignSectionTopicSchema.safeParse({ sectionId: "12", topicId: TOPIC_ID }).success).toBe(false);
   });
 });

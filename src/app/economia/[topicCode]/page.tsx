@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, Lock } from "lucide-react";
 import TopicStudioClient from "@/components/economics/TopicStudioClient";
 import { StatusPanel, SupabaseSetupHint } from "@/components/ui/StatusPanel";
+import { loadTopicAcervo } from "@/lib/data/acervo-data";
 import { loadShellData, loadTopicStudio, type TopicStudioData } from "@/lib/data/study-data";
 import { isGeminiConfigured } from "@/lib/server-clients";
 
@@ -106,5 +107,7 @@ export default async function EconomiaTopicStudioPage({ params }: PageProps) {
   // O Tutor só faz sentido com a IA configurada e algum acervo indexado para consultar.
   const tutorAvailable = isGeminiConfigured() && (shell.stats.indexedChunks ?? 0) > 0;
 
-  return <TopicStudioClient data={result.data} tutorAvailable={tutorAvailable} />;
+  const acervo = await loadTopicAcervo(result.data.topic.id);
+
+  return <TopicStudioClient data={result.data} tutorAvailable={tutorAvailable} acervo={acervo} />;
 }

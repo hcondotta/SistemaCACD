@@ -90,7 +90,8 @@ export const loadShellData = cache(async (): Promise<ShellData> => {
         supabase.from("tps_attempts").select("id", { count: "exact", head: true }),
         supabase.from("tps_attempts").select("id", { count: "exact", head: true }).eq("is_correct", true),
         supabase.from("tps_attempts").select("id", { count: "exact", head: true }).eq("selected_answer", "B"),
-        supabase.from("document_chunks").select("id", { count: "exact", head: true }),
+        // Só conta o que o Tutor consegue usar: trecho com vetor (o acervo sem IA não tem).
+        supabase.from("document_chunks").select("id", { count: "exact", head: true }).not("embedding", "is", null),
       ]);
 
     const failure = [subjectsRes, modulesRes, topicsRes, progressRes, dueRes, answeredRes, correctRes, blankRes, chunksRes]

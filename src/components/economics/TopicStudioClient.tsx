@@ -13,10 +13,12 @@ import {
   Circle,
   Clock,
   Columns2,
+  Library,
   MessageSquareText,
   Quote,
   TrendingUp,
 } from "lucide-react";
+import { TopicAcervoPanel, topicAcervoCount } from "@/components/acervo/TopicAcervoPanel";
 import CausalGraphTranslator from "@/components/economics/CausalGraphTranslator";
 import { MASTERY_STATUS_LABELS } from "@/components/economics/status-labels";
 import { useLearningLayer } from "@/components/layout/learning-layer";
@@ -24,10 +26,11 @@ import TutorRAGDrawer from "@/components/tutor/TutorRAGDrawer";
 import { AthosBulcaoPattern, DiplomaticBadge } from "@/components/ui/DiplomaticBadges";
 import { StatusPanel } from "@/components/ui/StatusPanel";
 import { advanceTopicProgress } from "@/lib/actions/study-actions";
+import type { TopicAcervoResult } from "@/lib/data/acervo-data";
 import type { TopicStudioData } from "@/lib/data/study-data";
 import { advanceStatus, type MasteryStatus, type StudyCheckpoint } from "@/lib/trail";
 
-type StudioTab = "ficha" | "graficos" | "armadilhas";
+type StudioTab = "ficha" | "acervo" | "graficos" | "armadilhas";
 
 const CHECKPOINTS: Array<{ id: StudyCheckpoint; label: string; description: string }> = [
   {
@@ -52,9 +55,11 @@ const markdownClasses = "prose prose-itamaraty font-serif";
 export default function TopicStudioClient({
   data,
   tutorAvailable,
+  acervo,
 }: {
   data: TopicStudioData;
   tutorAvailable: boolean;
+  acervo: TopicAcervoResult;
 }) {
   const { learningLayer, setLearningLayer } = useLearningLayer();
   const [activeTab, setActiveTab] = useState<StudioTab>("ficha");
@@ -77,8 +82,10 @@ export default function TopicStudioClient({
     });
   }
 
+  const acervoCount = topicAcervoCount(acervo);
   const tabs: Array<{ id: StudioTab; label: string; icon: typeof BookOpen }> = [
     { id: "ficha", label: "Ficha em duas camadas", icon: BookOpen },
+    { id: "acervo", label: `Do seu acervo (${acervoCount})`, icon: Library },
     { id: "graficos", label: `Tradutor de gráficos (${causalModels.length})`, icon: TrendingUp },
     {
       id: "armadilhas",
@@ -296,6 +303,16 @@ export default function TopicStudioClient({
                   apostilas, aulas e fichamentos). Enquanto isso, estude pelo seu próprio material e registre o avanço
                   abaixo — a trilha destrava os próximos tópicos do mesmo jeito.
                 </p>
+                {acervoCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("acervo")}
+                    className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-itamaraty-navy-600 px-3 py-1.5 text-xs font-bold text-travertine-50 transition hover:bg-itamaraty-navy-700 dark:bg-itamaraty-gold-500 dark:text-itamaraty-navy-950 dark:hover:bg-itamaraty-gold-400"
+                  >
+                    <Library className="h-3.5 w-3.5" aria-hidden />
+                    Ler o que o seu acervo tem sobre este tópico ({acervoCount})
+                  </button>
+                )}
               </StatusPanel>
             )}
 
@@ -378,6 +395,8 @@ export default function TopicStudioClient({
         )}
 
         {/* ABA 2: tradutor de gráficos */}
+        {activeTab === "acervo" && <TopicAcervoPanel acervo={acervo} />}
+
         {activeTab === "graficos" &&
           (causalModels.length > 0 ? (
             <CausalGraphTranslator models={causalModels} />

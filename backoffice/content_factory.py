@@ -1,291 +1,449 @@
-import os
-import json
-import glob
-import math
-from pathlib import Path
-from typing import List, Literal, Optional
-from dotenv import load_dotenv
-from pydantic import BaseModel, Field
-from rich.console import Console
-from google import genai
-from google.genai import types
-from supabase import create_client, Client
+"""Fábrica de conteúdo do CACD — linha de comando.
 
-load_dotenv()
+Leva o acervo da aluna (livros, apostilas, aulas, provas e anotações) para o sistema. A extração
+roda toda no computador, sem serviço de IA: o jeito mais fácil é soltar os arquivos em
+acervo/entrada/<tipo>/ e dar dois cliques em "acervo/Adicionar conteúdo.bat".
+
+Comandos (de dentro de backoffice/, com o ambiente virtual):
+
+    .venv\\Scripts\\python content_factory.py status
+    .venv\\Scripts\\python content_factory.py scan                 # lê acervo/entrada
+    .venv\\Scripts\\python content_factory.py ingest --dry-run     # simula, sem gravar
+    .venv\\Scripts\\python content_factory.py ingest               # extrai e grava
+
+Fase de IA (por último; exige GEMINI_API KEY no .env.local):
+
+    .venv\\Scripts\\python content_factory.py ingest --com-vetores --reprocess
+    .venv\\Scripts\\python content_factory.py search "trindade impossível" --topic 3.3
+    .venv\\Scripts\\python content_factory.py synthesize 3.3
+
+Formato do manifesto, custos e cuidados: backoffice/README.md.
+"""
+
+from __future__ import annotations
+
+import argparse
+import os
+import re
+import sys
+import traceback
+from collections import Counter
+from pathlib import Path
+
+BACKOFFICE_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = BACKOFFICE_DIR.parent
+ACERVO_DIR = PROJECT_ROOT / "acervo"
+
+# Antes de qualquer import do Docling ou do Whisper: os pesos baixados ficam no D:, não no C:.
+os.environ.setdefault("HF_HOME", str(BACKOFFICE_DIR / ".cache" / "huggingface"))
+os.environ.setdefault("HF_HUB_DISABLE_SYMLINKS_WARNING", "1")
+
+from rich.console import Console  # noqa: E402
+
+from cacd_factory.config import ConfigError, Settings, load_settings  # noqa: E402
+from cacd_factory.formats import is_supported  # noqa: E402
+from cacd_factory.inbox import INBOX_SUBFOLDERS  # noqa: E402
+from cacd_factory.manifest import BibliographyManifest, add_scanned_files, load_manifest, save_manifest  # noqa: E402
+from cacd_factory.pipeline import IngestResult, SynthesisResult, file_sha256, ingest_document, synthesize_topic  # noqa: E402
+from cacd_factory.sections import document_markdown  # noqa: E402
+from cacd_factory.store import SupabaseStore  # noqa: E402
+
+DEFAULT_MANIFEST = BACKOFFICE_DIR / "bibliography_manifest.json"
+MIGRATION_HINT = "supabase/migrations/20261114000000_acervo_sem_ia.sql"
+RETRIEVAL_PER_SEARCH = 12
+
 console = Console()
 
-supabase: Client = create_client(
-    os.environ["NEXT_PUBLIC_SUPABASE_URL"],
-    os.environ["SUPABASE_SERVICE_ROLE_KEY"]
-)
-ai_client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
 
-# ============================================================================
-# 0. EMBEDDINGS
-# ============================================================================
-# O antigo `text-embedding-004` produz apenas 768 dimensões e foi descontinuado.
-# O parâmetro `output_dimensionality` usa Matryoshka para TRUNCAR para baixo,
-# nunca para expandir: pedir 1536 dele falha contra a coluna `vector(1536)`.
-EMBEDDING_MODEL = "gemini-embedding-001"
-EMBEDDING_DIMENSIONS = 1536
+def gemini_client(settings: Settings):
+    from google import genai
+
+    settings.require("GEMINI_API_KEY")
+    return genai.Client(api_key=settings.gemini_api_key)
 
 
-def normalize_l2(vector: List[float]) -> List[float]:
-    """Normaliza o vetor para norma L2 = 1.
-
-    O `gemini-embedding-001` só entrega vetores pré-normalizados em 3072
-    dimensões. Em 1536 a normalização é responsabilidade do cliente, e sem ela a
-    distância de cosseno do pgvector fica distorcida — o RAG degrada em
-    silêncio, sem levantar erro nenhum.
-    """
-    magnitude = math.sqrt(sum(value * value for value in vector))
-    if magnitude == 0:
-        raise ValueError("Embedding degenerado: vetor de norma zero.")
-    return [value / magnitude for value in vector]
+def describe_topics(records) -> str:
+    counts = Counter(record.topic_code or "sem tópico" for record in records)
+    return ", ".join(f"{code}: {count}" for code, count in sorted(counts.items()))
 
 
-def embed_text(text: str) -> List[float]:
-    """Gera o embedding normalizado de um texto, pronto para gravar no pgvector."""
-    response = ai_client.models.embed_content(
-        model=EMBEDDING_MODEL,
-        contents=text,
-        config=types.EmbedContentConfig(output_dimensionality=EMBEDDING_DIMENSIONS)
+def safe_name(title: str) -> str:
+    return re.sub(r'[<>:"/\\|?*\x00-\x1f]+', "_", title).strip(" ._")[:120] or "documento"
+
+
+# --- status ---------------------------------------------------------------------
+
+
+def cmd_status(args, settings: Settings) -> int:
+    store = SupabaseStore.from_settings(settings)
+    subject = store.get_subject(args.subject)
+    topics = store.get_topics(subject.id)
+    summary = store.status_summary(subject, topics)
+    console.print(f"[bold]Banco[/bold]: conectado — {subject.name}, {len(topics)} tópicos na trilha.")
+    if not store.has_acervo_tables():
+        console.print(f"[yellow]A migração do acervo ainda não foi aplicada: rode {MIGRATION_HINT} no SQL Editor.[/yellow]")
+
+    documents = summary["documents"]
+    ready = sum(1 for document in documents if document.get("processed_at"))
+    console.print(
+        f"[bold]Acervo[/bold]: {len(documents)} documento(s), {ready} pronto(s); "
+        f"{summary['chunk_count']} trechos para busca, {summary['tagged_chunk_count']} ligados a um tópico."
     )
-    values = response.embeddings[0].values
-    if len(values) != EMBEDDING_DIMENSIONS:
-        raise ValueError(
-            f"Dimensão inesperada: a coluna do banco espera {EMBEDDING_DIMENSIONS}, "
-            f"o modelo devolveu {len(values)}."
+    for document in documents:
+        meta = document.get("metadata") or {}
+        state = "pronto" if document.get("processed_at") else "pendente"
+        details = [f"{meta.get('section_count', 0)} seções", f"{meta.get('asset_count', 0)} imagens"]
+        if meta.get("exam"):
+            details.append(f"{meta['exam'].get('items', 0)} itens de prova")
+        console.print(f"  • {document['title']} ({document['doc_type']}) — {state}: {', '.join(details)}")
+
+    console.print(f"[bold]Fichas[/bold]: {len(summary['topics_with_lesson'])} de {len(topics)} tópicos.")
+    if settings.gemini_api_key:
+        console.print("[bold]Gemini[/bold]: chave configurada (usada só na fase de IA).")
+    else:
+        console.print("[bold]Gemini[/bold]: sem chave — tudo bem: a extração não usa IA.")
+
+    manifest_path = Path(args.manifest)
+    if manifest_path.exists():
+        console.print(f"[bold]Manifesto[/bold]: {len(load_manifest(manifest_path).documents)} arquivo(s) em {manifest_path.name}.")
+    else:
+        console.print("[bold]Manifesto[/bold]: ainda não existe. Solte os arquivos em acervo/entrada e rode o scan.")
+    return 0
+
+
+# --- scan -------------------------------------------------------------------------
+
+
+def cmd_scan(args, settings: Settings) -> int:
+    manifest_path = Path(args.manifest).resolve()
+    if args.folder:
+        root = Path(args.folder)
+        if not root.is_dir():
+            console.print(f"[red]Pasta não encontrada:[/red] {root}")
+            return 1
+    else:
+        root = Path(args.acervo) / "entrada"
+        for folder in INBOX_SUBFOLDERS:
+            (root / folder).mkdir(parents=True, exist_ok=True)
+
+    root = root.resolve()
+    files = sorted(
+        path
+        for path in root.rglob("*")
+        if path.is_file() and not any(part.startswith(".") for part in path.relative_to(root).parts)
+    )
+    manifest = load_manifest(manifest_path) if manifest_path.exists() else BibliographyManifest()
+    updated, added = add_scanned_files(manifest, files, root=root, subject=args.subject, manifest_dir=manifest_path.parent)
+    if manifest.library_root is None:
+        # Pasta-base relativa ao manifesto: o projeto continua funcionando se mudar de lugar.
+        try:
+            relative = Path(os.path.relpath(root, manifest_path.parent))
+        except ValueError:
+            relative = None  # outra unidade de disco: fica o caminho absoluto
+        if relative is not None and relative.parts.count("..") <= 2:
+            updated = updated.model_copy(update={"library_root": relative.as_posix()})
+    save_manifest(updated, manifest_path)
+
+    ignored = [
+        path.relative_to(root) for path in files if not is_supported(path) and path.suffix.lower() not in (".srt", ".vtt")
+    ]
+    console.print(f"{len(added)} arquivo(s) novo(s) no manifesto; {len(ignored)} ignorado(s) pelo formato.")
+    for document in added:
+        extra = f"; gabarito: {Path(document.answer_key).name}" if document.answer_key else ""
+        console.print(f"  + {document.path} [dim]({document.doc_type}{extra})[/dim]")
+    for path in ignored[:10]:
+        console.print(f"  [dim]- ignorado: {path.as_posix()}[/dim]")
+    if added:
+        console.print(
+            "Dica: em backoffice/bibliography_manifest.json dá para corrigir título, autor e edição, e ligar "
+            "capítulos a tópicos (topic_pages). Também dá para fazer isso depois, pela tela do Acervo."
         )
-    return normalize_l2(values)
+    return 0
 
-# ============================================================================
-# 1. CONTRATOS PYDANTIC PARA GERAÇÃO ESTRUTURADA (BACK-OFFICE FACTORY)
-# ============================================================================
 
-class TPSTrapSchema(BaseModel):
-    wrong_claim: str = Field(description="Afirmação falsa típica de prova que induz ao erro")
-    truth_mechanism: str = Field(description="Explicação técnica da causalidade correta")
-    trap_category: str = Field(description="Ex: Inversão Causal, Confusão Real vs Nominal, Troca Histórica")
+# --- ingest -----------------------------------------------------------------------
 
-class EssayRepertoireSchema(BaseModel):
-    author_or_source: str = Field(description="Ex: Celso Furtado, Marcelo de Paiva Abreu, Giambiagi")
-    core_thesis: str = Field(description="Tese central resumida para uso em discursiva de 3ª Fase")
-    historical_data_or_milestone: str = Field(description="Dado histórico, decreto, plano ou indicador concreto")
 
-class FlashcardSeedSchema(BaseModel):
-    front_prompt: str = Field(description="Pergunta ativa focada em mecanismo causal ou distinção conceitual")
-    back_answer: str = Field(description="Resposta objetiva e precisa baseada nas fontes")
+def report_ingest(result: IngestResult) -> None:
+    counts = f"{result.section_count} seções, {result.asset_count} imagens, {result.chunk_count} trechos"
+    if result.status == "ingested":
+        console.print(f"  [green]✓ gravado: {counts}[/green] [dim]({describe_topics(result.records)})[/dim]")
+        if result.exam_counts:
+            exam = result.exam_counts
+            console.print(
+                f"    prova: {exam.get('stems', 0)} questões, {exam.get('items', 0)} itens com gabarito"
+                + (f", {exam['skipped_items']} sem gabarito ou anulados" if exam.get("skipped_items") else "")
+                + (f", {exam['essays']} discursivas" if exam.get("essays") else "")
+            )
+    elif result.status == "skipped":
+        console.print(f"  = já está no acervo ({result.section_count} seções); nada a fazer")
+    elif result.status == "duplicate":
+        console.print(f"  [yellow]≠ o mesmo arquivo já está no acervo como {result.duplicate_of}[/yellow]")
+    elif result.status == "empty":
+        console.print("  [yellow]! nenhum texto extraído — PDF só de imagens? Confira se o OCR leu as páginas.[/yellow]")
+    else:
+        console.print(f"  ~ simulação: {counts} [dim]({describe_topics(result.records)})[/dim]")
+        for record in result.records[:3]:
+            console.print(f"    [dim]{record.citation_label}[/dim]")
 
-class TPSGeneratedItemSchema(BaseModel):
-    statement: str = Field(description="Assertiva no estilo Cebraspe/IADES para julgar Certo ou Errado")
-    official_answer: Literal["C", "E"]
-    detailed_explanation_md: str = Field(description="Justificativa detalhada citando o mecanismo e a fonte")
-    trap_category: str
 
-class TopicContentPackageSchema(BaseModel):
-    base_intuition_md: str = Field(description="Explicação didática Base Zero em Markdown para construir fundação")
-    cacd_deep_dive_md: str = Field(description="Aprofundamento técnico CACD em Markdown com modelos e historiografia")
-    tps_traps: List[TPSTrapSchema]
-    essay_repertoire: List[EssayRepertoireSchema]
-    initial_flashcards: List[FlashcardSeedSchema]
-    generated_tps_items: List[TPSGeneratedItemSchema]
+def write_outputs(title: str, result: IngestResult, acervo: Path) -> None:
+    if result.sections:
+        processed = acervo / "processado"
+        processed.mkdir(parents=True, exist_ok=True)
+        target = processed / f"{safe_name(title)}.md"
+        target.write_text(document_markdown(title, result.sections), encoding="utf-8")
+        console.print(f"    [dim]texto extraído: acervo/processado/{target.name}[/dim]")
+    if result.review_md:
+        review = acervo / "revisao"
+        review.mkdir(parents=True, exist_ok=True)
+        target = review / f"{safe_name(title)}.md"
+        target.write_text(result.review_md, encoding="utf-8")
+        console.print(f"    [yellow]revise a prova em: acervo/revisao/{target.name}[/yellow]")
 
-# ============================================================================
-# 2. EXTRATORES DE ARQUIVOS (PDF VIA DOCLING, VÍDEO VIA WHISPER, NOTAS MD)
-# ============================================================================
 
-def extract_text_from_pdf(pdf_path: str) -> List[dict]:
-    """Extrai texto de PDF preservando tabelas e seções usando Docling."""
-    from docling.document_converter import DocumentConverter
-    console.print(f"[cyan]Extraindo PDF com Docling:[/cyan] {pdf_path}")
-    converter = DocumentConverter()
-    result = converter.convert(pdf_path)
-    full_md = result.document.export_to_markdown()
-    return chunk_markdown_by_sections(full_md, source_label=Path(pdf_path).stem)
+def cmd_ingest(args, settings: Settings) -> int:
+    from cacd_factory.extractors import FileExtractor
 
-def transcribe_video_or_audio(media_path: str) -> List[dict]:
-    """Transcreve videoaulas localmente com Faster-Whisper preservando minutagem."""
-    from faster_whisper import WhisperModel
-    console.print(f"[cyan]Transcrevendo aula com Whisper:[/cyan] {media_path}")
-    model = WhisperModel("large-v3", device="auto", compute_type="float16")
-    segments, _ = model.transcribe(media_path, language="pt", beam_size=5)
+    manifest_path = Path(args.manifest)
+    if not manifest_path.exists():
+        console.print("[red]Manifesto não encontrado.[/red] Solte os arquivos em acervo/entrada e rode o scan antes.")
+        return 1
+    manifest = load_manifest(manifest_path)
+    store = SupabaseStore.from_settings(settings)
+    if not args.dry_run and not store.has_acervo_tables():
+        console.print(f"[red]Antes da primeira gravação, aplique {MIGRATION_HINT} no SQL Editor do Supabase.[/red]")
+        return 1
 
-    chunks = []
-    buffer_text = []
-    start_ts = 0.0
+    embed = None
+    if args.com_vetores and not args.dry_run:
+        from cacd_factory.gemini import embed_documents
 
-    for seg in segments:
-        if not buffer_text:
-            start_ts = seg.start
-        buffer_text.append(seg.text.strip())
-        if sum(len(t) for t in buffer_text) >= 1400:
-            end_ts = seg.end
-            citation = f"Minutagem {int(start_ts//60):02d}:{int(start_ts%60):02d} a {int(end_ts//60):02d}:{int(end_ts%60):02d}"
-            chunks.append({"text": " ".join(buffer_text), "citation": citation})
-            buffer_text = []
+        client = gemini_client(settings)
 
-    if buffer_text:
-        chunks.append({"text": " ".join(buffer_text), "citation": f"A partir de {int(start_ts//60):02d}:{int(start_ts%60):02d}"})
-    return chunks
+        def embed(texts, title):
+            return embed_documents(client, texts, title=title)
 
-def chunk_markdown_by_sections(md_text: str, source_label: str, max_chars: int = 1600) -> List[dict]:
-    """Divide textos Markdown/Notas mantendo cabeçalhos de seção como referência."""
-    paragraphs = md_text.split("\n\n")
-    chunks = []
-    current_chunk = []
-    current_heading = "Seção Geral"
+    needle = (args.only or "").casefold()
+    selected = [
+        document
+        for document in manifest.documents
+        if not needle or needle in document.path.casefold() or needle in document.title.casefold()
+    ]
+    if not selected:
+        console.print("Nenhum documento do manifesto corresponde à seleção.")
+        return 1
 
-    for p in paragraphs:
-        p_strip = p.strip()
-        if not p_strip:
+    def resolve(stored: str) -> Path:
+        return manifest.resolve(stored, manifest_path.parent)
+
+    # Confere tudo antes de processar qualquer arquivo: erro de manifesto não pode sair pela metade.
+    subjects, topics_by_subject, problems = {}, {}, []
+    for document in selected:
+        if document.subject not in subjects:
+            subjects[document.subject] = store.get_subject(document.subject)
+            topics_by_subject[document.subject] = store.get_topics(subjects[document.subject].id)
+        codes = {document.topic, *(entry.topic for entry in document.topic_pages)} - {None}
+        unknown = sorted(codes - topics_by_subject[document.subject].keys())
+        if unknown:
+            problems.append(f"{document.path}: tópico(s) inexistente(s) em {document.subject}: {', '.join(unknown)}")
+        if not resolve(document.path).is_file():
+            problems.append(f"{document.path}: arquivo não encontrado em {resolve(document.path)}")
+        if document.answer_key and not resolve(document.answer_key).is_file():
+            problems.append(f"{document.path}: gabarito não encontrado em {resolve(document.answer_key)}")
+    if problems:
+        console.print("[red]Corrija o manifesto antes de continuar:[/red]")
+        for problem in problems:
+            console.print(f"  • {problem}")
+        return 1
+
+    extractor = FileExtractor(
+        whisper_model=settings.whisper_model,
+        whisper_device=settings.whisper_device,
+        resolve=resolve,
+        log=lambda message: console.print(f"    [dim]{message}[/dim]"),
+    )
+    failures = 0
+    for number, document in enumerate(selected, start=1):
+        console.print(f"[bold]({number}/{len(selected)}) {document.title}[/bold] [dim]{document.path}[/dim]")
+        try:
+            result = ingest_document(
+                doc=document,
+                file_path=resolve(document.path),
+                subject=subjects[document.subject],
+                topics=topics_by_subject[document.subject],
+                store=store,
+                extract=extractor,
+                embed=embed,
+                reprocess=args.reprocess,
+                dry_run=args.dry_run,
+                answer_key_hash=file_sha256(resolve(document.answer_key)) if document.answer_key else None,
+            )
+        except Exception as error:
+            failures += 1
+            console.print(f"  [red]✗ {type(error).__name__}: {error}[/red]")
+            if args.verbose:
+                console.print(traceback.format_exc())
             continue
-        if p_strip.startswith("#"):
-            current_heading = p_strip.lstrip("#").strip()
-        current_chunk.append(p_strip)
-        if sum(len(x) for x in current_chunk) >= max_chars:
-            chunks.append({
-                "text": "\n\n".join(current_chunk),
-                "citation": f"{current_heading}"
-            })
-            current_chunk = []
+        report_ingest(result)
+        write_outputs(document.title, result, Path(args.acervo))
+    if failures:
+        console.print(f"[red]{failures} arquivo(s) com erro; os demais foram processados.[/red] Rode com --verbose para detalhes.")
+    return 1 if failures else 0
 
-    if current_chunk:
-        chunks.append({
-            "text": "\n\n".join(current_chunk),
-            "citation": f"{current_heading}"
-        })
-    return chunks
 
-# ============================================================================
-# 3. VETORIZAÇÃO CONTEXTUAL E PERSISTÊNCIA NO SUPABASE
-# ============================================================================
+# --- fase de IA: busca e síntese ------------------------------------------------------
 
-def register_and_index_source(
-    subject_slug: str,
-    topic_code: str,
-    title: str,
-    author: str,
-    doc_type: Literal["book", "course_pdf", "video_transcript", "personal_note", "past_exam"],
-    authority_weight: int,
-    raw_chunks: List[dict]
-) -> str:
-    """Registra o documento e salva os chunks vetorizados com cabeçalho contextual."""
-    subj = supabase.table("subjects").select("id, name").eq("slug", subject_slug).single().execute().data
-    topic = supabase.table("topics").select("id, title").eq("code", topic_code).single().execute().data
 
-    doc_insert = supabase.table("source_documents").insert({
-        "subject_id": subj["id"],
-        "title": title,
-        "author": author,
-        "doc_type": doc_type,
-        "authority_weight": authority_weight
-    }).execute()
-    source_doc_id = doc_insert.data[0]["id"]
+def cmd_search(args, settings: Settings) -> int:
+    from cacd_factory.gemini import embed_query
+    from cacd_factory.synthesis import strip_context_header
 
-    console.print(f"[green]Vetorizando {len(raw_chunks)} blocos para:[/green] {title}")
-    for idx, ch in enumerate(raw_chunks):
-        contextual_content = (
-            f"[Disciplina: {subj['name']} | Tópico {topic_code}: {topic['title']} | "
-            f"Fonte: {title} ({author}) - {ch['citation']}]\n{ch['text']}"
+    store = SupabaseStore.from_settings(settings)
+    client = gemini_client(settings)
+    subject = store.get_subject(args.subject)
+    topic_id = None
+    if args.topic:
+        topics = store.get_topics(subject.id)
+        if args.topic not in topics:
+            console.print(f"[red]Tópico {args.topic} não existe em {subject.name}.[/red]")
+            return 1
+        topic_id = topics[args.topic].id
+    rows = store.hybrid_search(
+        query_text=args.query,
+        query_embedding=embed_query(client, args.query),
+        subject_id=subject.id,
+        topic_id=topic_id,
+        match_count=args.k,
+    )
+    if not rows:
+        console.print("Nenhum trecho encontrado.")
+        return 0
+    for rank, row in enumerate(rows, start=1):
+        snippet = " ".join(strip_context_header(row["content"]).split())[:280]
+        console.print(f"[bold]{rank}.[/bold] {row['citation_label']} [dim](rrf {float(row['rrf_score']):.4f})[/dim]")
+        console.print(f"   {snippet}…")
+    return 0
+
+
+def report_synthesis(result: SynthesisResult) -> None:
+    if result.status == "saved":
+        console.print(f"  [green]✓ ficha gravada com {len(result.blocks)} blocos do acervo[/green]")
+    elif result.status == "exists":
+        console.print("  = já tem ficha (use --force para gerar de novo)")
+    elif result.status == "insufficient":
+        console.print(f"  [yellow]! acervo insuficiente ({len(result.blocks)} bloco(s) recuperado(s)); nada gravado[/yellow]")
+    elif result.status == "invalid":
+        console.print("  [red]✗ ficha recusada: as citações não conferem com os blocos; nada gravado[/red]")
+        for error in result.errors[:6]:
+            console.print(f"    • {error}")
+    else:
+        console.print(f"  ~ simulação: {len(result.blocks)} blocos seriam enviados ao modelo")
+        for block in result.blocks:
+            console.print(f"    [dim][{block.number}] {block.citation_label}[/dim]")
+    for gap in result.gaps:
+        console.print(f"    [yellow]não coberto: {gap}[/yellow]")
+
+
+def cmd_synthesize(args, settings: Settings) -> int:
+    from cacd_factory.gemini import embed_query, generate_structured
+    from cacd_factory.synthesis import MAX_SOURCE_BLOCKS, LessonPackage, merge_retrieved
+
+    if not args.all and not args.codes:
+        console.print("[red]Informe os códigos dos tópicos (ex.: 3.3 2.4) ou use --all.[/red]")
+        return 1
+    store = SupabaseStore.from_settings(settings)
+    client = gemini_client(settings)
+    subject = store.get_subject(args.subject)
+    topics = store.get_topics(subject.id)
+    unknown = [code for code in args.codes if code not in topics]
+    if unknown:
+        console.print(f"[red]Tópico(s) inexistente(s) em {subject.name}: {', '.join(unknown)}[/red]")
+        return 1
+    selected = list(topics.values()) if args.all else [topics[code] for code in args.codes]
+
+    def retrieve(topic):
+        vector = embed_query(client, topic.title)
+        search = dict(query_text=topic.title, query_embedding=vector, subject_id=subject.id, match_count=RETRIEVAL_PER_SEARCH)
+        return merge_retrieved(
+            store.hybrid_search(**search, topic_id=topic.id),
+            store.hybrid_search(**search, topic_id=None),
+            limit=MAX_SOURCE_BLOCKS,
         )
 
-        embedding_vector = embed_text(contextual_content)
-
-        supabase.table("document_chunks").insert({
-            "source_document_id": source_doc_id,
-            "topic_id": topic["id"],
-            "chunk_index": idx,
-            "content": contextual_content,
-            "citation_label": f"{author} - {title} ({ch['citation']})",
-            "embedding": embedding_vector
-        }).execute()
-
-    return topic["id"]
-
-# ============================================================================
-# 4. SÍNTESE DO PACOTE DE ESTUDO DO TÓPICO (AULA DUPLA + QUESTÕES + FLASHCARDS)
-# ============================================================================
-
-def synthesize_topic_package(topic_code: str):
-    """Lê todos os chunks confiáveis de um tópico e gera a aula dupla, itens TPS e flashcards."""
-    topic = supabase.table("topics").select("id, title, official_edital_ref").eq("code", topic_code).single().execute().data
-    chunks = supabase.table("document_chunks").select("content, citation_label").eq("topic_id", topic["id"]).limit(40).execute().data
-
-    if not chunks:
-        console.print(f"[yellow]Nenhum chunk encontrado para o tópico {topic_code}.[/yellow]")
-        return
-
-    compiled_corpus = "\n\n---\n\n".join(
-        [f"FONTE ({c['citation_label']}):\n{c['content']}" for c in chunks]
-    )
-
-    system_prompt = """
-    Você é um professor catedrático de Economia preparatório para o Instituto Rio Branco (CACD).
-    Sua missão é processar exclusivamente o acervo confiável abaixo e estruturar o estudo do tópico:
-    1. Em `base_intuition_md`: construa a base desde o zero. Explique a intuição econômica, variáveis, eixos dos gráficos e relações de causa e efeito em linguagem clara, passo a passo, sem pular etapas lógicas.
-    2. Em `cacd_deep_dive_md`: aprofunde no nível de 1ª e 3ª Fase do CACD, detalhando equações intuitivas, mecanismos de transmissão, exceções teóricas e o debate entre os autores presentes no acervo.
-    3. Sempre referencie os autores e obras fornecidos no acervo.
-    """
-
-    console.print(f"[magenta]Sintetizando pacote pedagógico com Gemini 2.5 Pro para {topic_code}...[/magenta]")
-    response = ai_client.models.generate_content(
-        model="gemini-2.5-pro",
-        contents=f"Tópico: {topic_code} - {topic['title']} ({topic['official_edital_ref']})\n\nACERVO:\n{compiled_corpus}",
-        config=types.GenerateContentConfig(
-            system_instruction=system_prompt,
-            response_mime_type="application/json",
-            response_schema=TopicContentPackageSchema,
-            temperature=0.15
+    def generate(system_prompt, user_prompt):
+        return generate_structured(
+            client, model=settings.synthesis_model, system_prompt=system_prompt, user_prompt=user_prompt, schema=LessonPackage
         )
-    )
 
-    pkg: TopicContentPackageSchema = response.parsed
+    failures = 0
+    for topic in selected:
+        console.print(f"[bold]{topic.code}[/bold] {topic.title}")
+        try:
+            result = synthesize_topic(
+                topic=topic, subject=subject, store=store, retrieve=retrieve, generate=generate, force=args.force, dry_run=args.dry_run
+            )
+        except Exception as error:
+            failures += 1
+            console.print(f"  [red]✗ {type(error).__name__}: {error}[/red]")
+            if args.verbose:
+                console.print(traceback.format_exc())
+            continue
+        report_synthesis(result)
+    return 1 if failures else 0
 
-    # Salva a ficha dupla do tópico
-    supabase.table("topic_lessons").upsert({
-        "topic_id": topic["id"],
-        "base_intuition_md": pkg.base_intuition_md,
-        "cacd_deep_dive_md": pkg.cacd_deep_dive_md,
-        "tps_traps_json": [t.model_dump() for t in pkg.tps_traps],
-        "essay_repertoire_json": [r.model_dump() for r in pkg.essay_repertoire]
-    }, on_conflict="topic_id").execute()
 
-    # Salva os flashcards iniciais FSRS
-    if pkg.initial_flashcards:
-        supabase.table("flashcards").insert([
-            {
-                "topic_id": topic["id"],
-                "origin": "pre_processed",
-                "front_prompt": fc.front_prompt,
-                "back_answer": fc.back_answer
-            }
-            for fc in pkg.initial_flashcards
-        ]).execute()
+# --- entrada ----------------------------------------------------------------------
 
-    # Salva itens inéditos de TPS (Certo/Errado)
-    if pkg.generated_tps_items:
-        subj = supabase.table("subjects").select("id").eq("slug", "economia").single().execute().data
-        stem = supabase.table("tps_question_stems").insert({
-            "subject_id": subj["id"],
-            "is_ai_generated": True,
-            "stem_text": f"Acerca de {topic['title']}, julgue os itens a seguir em Certo (C) ou Errado (E)."
-        }).execute().data[0]
 
-        supabase.table("tps_items").insert([
-            {
-                "stem_id": stem["id"],
-                "topic_id": topic["id"],
-                "item_number": i + 1,
-                "statement": item.statement,
-                "official_answer": item.official_answer,
-                "detailed_explanation_md": item.detailed_explanation_md,
-                "trap_category": item.trap_category
-            }
-            for i, item in enumerate(pkg.generated_tps_items)
-        ]).execute()
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(prog="content_factory.py", description="Fábrica de conteúdo do CACD.")
+    parser.add_argument("--manifest", default=str(DEFAULT_MANIFEST), help="caminho do bibliography_manifest.json")
+    parser.add_argument("--subject", default="economia", help="slug da disciplina (padrão: economia)")
+    parser.add_argument("--verbose", action="store_true", help="mostra o traceback completo dos erros")
+    parser.add_argument("--acervo", default=str(ACERVO_DIR), help="pasta do acervo (entrada, processado, revisao)")
+    commands = parser.add_subparsers(dest="command", required=True)
 
-    console.print(f"[bold green]Pacote do tópico {topic_code} salvo com sucesso![/bold green]")
+    status = commands.add_parser("status", help="situação do banco, do acervo e das fichas")
+    status.set_defaults(handler=cmd_status)
+
+    scan = commands.add_parser("scan", help="acrescenta ao manifesto os arquivos novos (padrão: acervo/entrada)")
+    scan.add_argument("folder", nargs="?", help="outra pasta, se não for a acervo/entrada")
+    scan.set_defaults(handler=cmd_scan)
+
+    ingest = commands.add_parser("ingest", help="extrai e grava no banco o que está no manifesto")
+    ingest.add_argument("--only", help="processa só os documentos cujo caminho ou título contém este texto")
+    ingest.add_argument("--dry-run", action="store_true", help="extrai e mostra o resultado, sem gravar")
+    ingest.add_argument("--reprocess", action="store_true", help="refaz mesmo o que já está no acervo")
+    ingest.add_argument("--com-vetores", action="store_true", help="fase de IA: também vetoriza os trechos (Gemini)")
+    ingest.set_defaults(handler=cmd_ingest)
+
+    search = commands.add_parser("search", help="fase de IA: testa a busca híbrida do RAG")
+    search.add_argument("query", help="pergunta ou termos de busca")
+    search.add_argument("--topic", help="restringe a um tópico (ex.: 3.3)")
+    search.add_argument("-k", type=int, default=8, help="quantidade de trechos (padrão: 8)")
+    search.set_defaults(handler=cmd_search)
+
+    synthesize = commands.add_parser("synthesize", help="fase de IA: gera a ficha em duas camadas")
+    synthesize.add_argument("codes", nargs="*", help="códigos dos tópicos (ex.: 3.3 2.4)")
+    synthesize.add_argument("--all", action="store_true", help="todos os tópicos da disciplina, na ordem da trilha")
+    synthesize.add_argument("--force", action="store_true", help="gera de novo mesmo quando já existe ficha")
+    synthesize.add_argument("--dry-run", action="store_true", help="mostra os blocos recuperados sem chamar o modelo")
+    synthesize.set_defaults(handler=cmd_synthesize)
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
+    args = build_parser().parse_args(argv)
+    try:
+        return args.handler(args, load_settings())
+    except (ConfigError, LookupError) as error:
+        console.print(f"[red]{error}[/red]")
+        return 2
+
 
 if __name__ == "__main__":
-    console.print("[bold blue]Pipeline de Ingestão CACD pronto para execução.[/bold blue]")
+    sys.exit(main())

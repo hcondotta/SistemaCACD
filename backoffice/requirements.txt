@@ -1,8 +1,11 @@
+# Back-office: fábrica de conteúdo do CACD (Python 3.11).
+# Instale num ambiente virtual em backoffice/.venv (ver README.md desta pasta).
 google-genai>=1.5.0
 supabase>=2.10.0
 pydantic>=2.9.0
 python-dotenv>=1.0.1
-docling>=2.15.0
-faster-whisper>=1.1.0
-tiktoken>=0.8.0
 rich>=13.9.0
+# PDF, DOCX, PPTX e HTML com estrutura, páginas e OCR de digitalizados (puxa torch CPU).
+docling>=2.15.0
+# Videoaulas e áudios: só é carregado quando o manifesto tem mídia.
+faster-whisper>=1.1.0

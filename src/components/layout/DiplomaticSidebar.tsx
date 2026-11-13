@@ -9,6 +9,7 @@ import {
   Feather,
   FileCheck2,
   Layers,
+  Library,
   TrendingUp,
   type LucideIcon,
 } from "lucide-react";
@@ -24,6 +25,7 @@ interface StudyEnvironment {
 
 const STUDY_ENVIRONMENTS: StudyEnvironment[] = [
   { name: "Trilha Guiada do Edital", href: "/economia", icon: Compass, available: true },
+  { name: "Acervo: livros, aulas e provas", href: "/acervo", icon: Library, available: true },
   { name: "Tradutor de Gráficos & BP", href: "/economia/modelos", icon: TrendingUp, available: false },
   { name: "Arena TPS (Certo/Errado)", href: "/tps", icon: FileCheck2, available: false },
   { name: "Caderno de Erros", href: "/caderno-de-erros", icon: AlertTriangle, available: false },
@@ -207,13 +209,13 @@ export default function DiplomaticSidebar({ shell }: { shell: ShellData }) {
         </div>
       </nav>
 
-      {/* Rodapé: tamanho real do acervo indexado para o RAG */}
+      {/* Rodapé: quanto do acervo já tem vetor para o Tutor (fase de IA) */}
       <div className="flex items-center gap-2 border-t border-travertine-200 px-4 py-3 text-[11px] text-ink-500 dark:border-itamaraty-navy-800 dark:text-travertine-300">
         <Database className="h-3.5 w-3.5 shrink-0" aria-hidden />
         <span>
           {shell.stats.indexedChunks === null
             ? "Acervo indisponível"
-            : `Acervo: ${shell.stats.indexedChunks.toLocaleString("pt-BR")} trechos indexados`}
+            : `Tutor IA: ${shell.stats.indexedChunks.toLocaleString("pt-BR")} trechos do acervo vetorizados`}
         </span>
       </div>
     </aside>

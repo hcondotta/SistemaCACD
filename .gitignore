@@ -22,9 +22,13 @@ __pycache__/
 venv/
 .Python
 
-# Acervo didático (PDFs, videoaulas, fichamentos) — pesado e pessoal
-acervo/
+# Acervo didático (PDFs, videoaulas, fichamentos) — pesado e pessoal.
+# Só as instruções e o atalho de dois cliques são versionados.
+acervo/*
+!acervo/LEIA-ME.md
+!acervo/Adicionar conteúdo.bat
 backoffice/acervo/
+backoffice/bibliography_manifest.json
 
 # Logs e cache
 *.log
